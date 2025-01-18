@@ -50,6 +50,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - opensearch-net
 
 networks:
   opensearch-net:
