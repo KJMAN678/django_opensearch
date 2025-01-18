@@ -13,11 +13,16 @@ http://localhost:8000/
 $ docker compose run --rm web uv run manage.py createsuperuser
 
 # app 追加
-$ docker compose run --rm web uv run django-admin startapp blog
+$ docker compose run --rm web uv run django-admin startapp search
 
 # マイグレーション
 $ docker compose run --rm web uv run manage.py makemigrations config
 $ docker compose run --rm web uv run manage.py migrate
+```
+
+```sh
+# OpenSearch のインデックス作成, 検索
+$ docker compose run --rm web uv run manage.py init_index
 ```
 
 ```sh
