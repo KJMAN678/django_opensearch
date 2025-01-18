@@ -16,8 +16,5 @@ link-mode = "copy"
 dev-dependencies = [
     "ruff==0.7.3",
     "pytest==8.3.3",
-    "tox==4.23.2",
-    "django-debug-toolbar==4.4.6",
-    "pytest-django==4.9.0",
-    "factory-boy==3.3.1",
+    "Faker==33.3.1"
 ]

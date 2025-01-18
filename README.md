@@ -4,8 +4,8 @@ $ docker compose up -d
 # OpenSearch DashBoard
 http://localhost:5601/app/home#/
 
-# Django
-http://localhost:8000/
+# Django 検索画面
+http://localhost:8000/blog/
 ```
 
 ```sh
@@ -16,13 +16,17 @@ $ docker compose run --rm web uv run manage.py createsuperuser
 $ docker compose run --rm web uv run django-admin startapp search
 
 # マイグレーション
-$ docker compose run --rm web uv run manage.py makemigrations config
+$ docker compose run --rm web uv run manage.py makemigrations blog
 $ docker compose run --rm web uv run manage.py migrate
 ```
 
 ```sh
+# ダミーデータの登録
+$ docker compose run --rm web uv run manage.py register_fake_blog_model --num 10
+
 # OpenSearch のインデックス作成, 検索
 $ docker compose run --rm web uv run manage.py init_index
+$ docker compose run --rm web uv run manage.py search
 ```
 
 ```sh

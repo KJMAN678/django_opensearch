@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from opensearchpy import OpenSearch
 import environ
 from search.documents import BlogDocument
-from blog.models import Blog
 
 
 class Command(BaseCommand):
@@ -27,13 +26,15 @@ class Command(BaseCommand):
             ssl_show_warn=False,
         )
 
-        if client.indices.exists(index="blog"):
-            client.indices.delete(index="blog")
-
-        # インデックスを作成
-        BlogDocument.init(using=client, index="blog")
-
-        blogs = Blog.objects.all()
-        for blog in blogs:
-            doc = BlogDocument(id=blog.id, title=blog.title, content=blog.content)
-            doc.save(using=client, index="blog")
+        # データの検索
+        response = client.search(
+            index=BlogDocument._index._name,
+            body={
+                "query": {
+                    "match": {
+                        "title": "動物"
+                    }
+                }
+            }
+        )
+        print(response)

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">検索</button>
+</form>
+
+
+<h3>検索結果:</h3>
+<ul>
+{% if posts %}
+
+    {% for post in posts %}
+        <li>
+            <p>{{ post.title }}</p>
+            <p>{{ post.content }}</p>
+        </li>
+    {% endfor %}
+{% else %}
+  <li>該当する投稿はありません。</li>
+{% endif %}
+</ul>
+
+</body>
+</html>
