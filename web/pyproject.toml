@@ -1,0 +1,22 @@
+[project]
+name = "django-web"
+version = "0.1.0"
+description = "OpenSearch + Django"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "Django==5.1.4",
+    "psycopg2-binary==2.9.10",
+    "django-environ==0.12.0",
+]
+
+[tool.uv]
+link-mode = "copy"
+dev-dependencies = [
+    "ruff==0.7.3",
+    "pytest==8.3.3",
+    "tox==4.23.2",
+    "django-debug-toolbar==4.4.6",
+    "pytest-django==4.9.0",
+    "factory-boy==3.3.1",
+]
