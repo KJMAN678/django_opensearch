@@ -1,5 +1,9 @@
 ```sh
+# コンテナ立上げ
 $ docker compose up -d
+
+# コンテナの再作成
+$ docker compose build --no-cache
 
 # OpenSearch DashBoard
 http://localhost:5601/app/home#/
@@ -18,6 +22,12 @@ $ docker compose run --rm web uv run django-admin startapp search
 # マイグレーション
 $ docker compose run --rm web uv run manage.py makemigrations blog
 $ docker compose run --rm web uv run manage.py migrate
+```
+
+```sh
+# ruff の実行
+$ docker compose run --rm web uv run ruff check . --fix
+$ docker compose run --rm web uv run ruff format .
 ```
 
 ```sh

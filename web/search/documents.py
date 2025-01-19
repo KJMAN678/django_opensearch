@@ -1,5 +1,6 @@
 from opensearchpy import Document, Text
 
+
 class BlogDocument(Document):
     id = Text()
     title = Text()

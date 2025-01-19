@@ -9,17 +9,16 @@ class Command(BaseCommand):
     help = "インデックス作成"
 
     def handle(self, *args, **options):
-
-        host = 'opensearch'
+        host = "opensearch"
         port = 9200
 
         env = environ.Env()
         environ.Env.read_env(".env")
-        OPENSEARCH_INITIAL_ADMIN_PASSWORD = env('OPENSEARCH_INITIAL_ADMIN_PASSWORD')
-        auth = ('admin', OPENSEARCH_INITIAL_ADMIN_PASSWORD)
+        OPENSEARCH_INITIAL_ADMIN_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")
+        auth = ("admin", OPENSEARCH_INITIAL_ADMIN_PASSWORD)
 
         client = OpenSearch(
-            hosts=[{'host': host, 'port': port}],
+            hosts=[{"host": host, "port": port}],
             http_auth=auth,
             use_ssl=True,
             verify_certs=False,
