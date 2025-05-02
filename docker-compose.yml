@@ -1,6 +1,7 @@
 services:
   opensearch:
-    image: opensearchproject/opensearch:2.18.0
+    build:
+      context: ./opensearch
     container_name: opensearch
     environment:
       - discovery.type=single-node
@@ -31,6 +32,10 @@ services:
       - ./web:/app/web
     ports:
       - "8000:8000"
+    environment:
+      - "DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}"
+      - "DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}"
+      - "DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}"
     command: uv run manage.py runserver 0.0.0.0:8000
     depends_on:
       - db
