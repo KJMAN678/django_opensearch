@@ -1,6 +1,6 @@
 services:
   opensearch:
-    image: opensearchproject/opensearch:2.18.0
+    image: opensearchproject/opensearch:2.19.2
     container_name: opensearch
     environment:
       - discovery.type=single-node
@@ -11,7 +11,7 @@ services:
       - opensearch-net
 
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.18.0
+    image: opensearchproject/opensearch-dashboards:2.19.1
     container_name: opensearch-dashboards
     ports:
       - 5601:5601
@@ -32,13 +32,17 @@ services:
     ports:
       - "8000:8000"
     command: uv run manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
     depends_on:
       - db
     networks:
       - opensearch-net
 
   db:
-    image: postgres:17
+    image: postgres:17.4
     ports:
         - "5432"
     environment:

@@ -34,5 +34,10 @@ class Command(BaseCommand):
 
         blogs = Blog.objects.all()
         for blog in blogs:
-            doc = BlogDocument(id=blog.id, title=blog.title, content=blog.content)
+            doc = BlogDocument(
+                id=blog.id,
+                title=blog.title,
+                title_suggest={"input": blog.title},
+                content=blog.content,
+            )
             doc.save(using=client, index="blog")

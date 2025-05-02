@@ -26,8 +26,20 @@ class Command(BaseCommand):
         )
 
         # データの検索
+        # response = client.search(
+        #     index=BlogDocument._index._name,
+        #     body={"query": {"match": {"title": "動物"}}},
+        # )
+        # print(response)
         response = client.search(
             index=BlogDocument._index._name,
-            body={"query": {"match": {"title": "動物"}}},
+            body={
+                "suggest": {
+                    "title_suggest": {
+                        "prefix": "どうぶ",
+                        "completion": {"field": "title_suggest", "size": 5},
+                    }
+                }
+            },
         )
-        print(response)
+        print(response["suggest"]["title_suggest"][0]["options"])
