@@ -12,16 +12,25 @@ class BlogDocument(Document):
         settings = {
             "analysis": {
                 "analyzer": {
-                    "my_analyzer": {
+                    "sudachi_analyzer": {
                         "type": "custom",
-                        "tokenizer": "standard",
-                        "filter": ["lowercase", "asciifolding"],
+                        "tokenizer": "sudachi_tokenizer",
+                        "mode": "search",
+                        "char_filter": ["icu_normalizer"],
+                        "filter": [
+                            "sudachi_baseform",
+                            "sudachi_part_of_speech",
+                            "cjk_width",
+                            "lowercase",
+                            "sudachi_readingform",
+                            "sudachi_normalizedform",
+                        ],
                     }
                 }
             }
         }
         mappings = {
             "properties": {
-                "title_suggest": {"type": "completion", "analyzer": "my_analyzer"}
+                "title_suggest": {"type": "completion", "analyzer": "sudachi_analyzer"}
             }
         }

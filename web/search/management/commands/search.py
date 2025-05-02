@@ -25,21 +25,16 @@ class Command(BaseCommand):
             ssl_show_warn=False,
         )
 
-        # データの検索
-        # response = client.search(
-        #     index=BlogDocument._index._name,
-        #     body={"query": {"match": {"title": "動物"}}},
-        # )
-        # print(response)
         response = client.search(
             index=BlogDocument._index._name,
             body={
                 "suggest": {
                     "title_suggest": {
-                        "prefix": "どうぶ",
+                        "prefix": "大統",
                         "completion": {"field": "title_suggest", "size": 5},
                     }
                 }
             },
         )
-        print(response["suggest"]["title_suggest"][0]["options"])
+        for option in response["suggest"]["title_suggest"][0]["options"]:
+            print(option["text"])

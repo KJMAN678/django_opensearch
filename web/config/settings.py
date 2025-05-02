@@ -132,3 +132,10 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# OpenSearch settings
+OPENSEARCH_HOSTS = ["https://opensearch:9200"]
+OPENSEARCH_USE_SSL = True
+OPENSEARCH_VERIFY_CERTS = False  # 開発環境でのみ使用
+OPENSEARCH_USERNAME = "admin"
+OPENSEARCH_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")

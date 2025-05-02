@@ -1,17 +1,24 @@
 services:
   opensearch:
-    image: opensearchproject/opensearch:2.19.2
-    container_name: opensearch
+    build:
+      context: ./opensearch
+    volumes:
+      - ./opensearch:/app/opensearch
     environment:
       - discovery.type=single-node
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - plugins.security.ssl.http.enabled=true
+      - DISABLE_INSTALL_DEMO_CONFIG=false  # デモ設定の自動インストールを有効化
+      - DISABLE_SECURITY_PLUGIN=false      # セキュリティプラグインを有効化
+      # - plugins.security.ssl.http.pemcert_filepath=/usr/share/opensearch/config/cert.pem
+      # - plugins.security.ssl.http.pemkey_filepath=/usr/share/opensearch/config/key.pem
     ports:
       - 9200:9200
     networks:
       - opensearch-net
 
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.19.1
+    image: opensearchproject/opensearch-dashboards:2.18.0
     container_name: opensearch-dashboards
     ports:
       - 5601:5601
@@ -36,8 +43,10 @@ services:
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
     depends_on:
       - db
+      - opensearch
     networks:
       - opensearch-net
 
