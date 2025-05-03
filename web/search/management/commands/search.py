@@ -28,6 +28,14 @@ class Command(BaseCommand):
         # データの検索
         response = client.search(
             index=BlogDocument._index._name,
-            body={"query": {"match": {"title": "動物"}}},
+            body={
+                "suggest": {
+                    "title_suggest": {
+                        "prefix": "主婦",
+                        "completion": {"field": "title_suggest", "size": 5},
+                    }
+                }
+            },
         )
-        print(response)
+        for option in response["suggest"]["title_suggest"][0]["options"]:
+            print(option["text"])

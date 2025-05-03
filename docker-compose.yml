@@ -5,25 +5,32 @@ services:
     container_name: opensearch
     environment:
       - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - OPENSEARCH_INITIAL_ADMIN_USERNAME=admin
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
     ports:
       - 9200:9200
     networks:
       - opensearch-net
 
-  opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:2.18.0
-    container_name: opensearch-dashboards
-    ports:
-      - 5601:5601
-    expose:
-      - "5601"
-    environment:
-      OPENSEARCH_HOSTS: "https://opensearch:9200"
-      OPENSEARCH_USERNAME: admin
-      OPENSEARCH_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
-    networks:
-      - opensearch-net
+
+  # opensearch-dashboards:
+  #   image: opensearchproject/opensearch-dashboards:2.17.1
+  #   container_name: opensearch-dashboards
+  #   ports:
+  #     - 5601:5601
+  #   expose:
+  #     - "5601"
+  #   environment:
+  #     OPENSEARCH_HOSTS: "https://opensearch:9200"
+  #     OPENSEARCH_USERNAME: admin
+  #     OPENSEARCH_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+  #   networks:
+  #     - opensearch-net
 
   web:
     build:
