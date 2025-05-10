@@ -6,6 +6,7 @@ import uuid
 
 
 def search_log(search_word):
+    """過去の検索ログを保存する"""
     host = "opensearch"
     port = 9200
 
@@ -40,3 +41,51 @@ def search_log(search_word):
             created_at=datetime.now(),
         )
         doc.save(using=client, index="past_search_log")
+
+
+def related_search_word_log(search_word):
+    # 関連の検索ワードを保存
+    host = "opensearch"
+    port = 9200
+
+    env = environ.Env()
+    environ.Env.read_env(".env")
+    OPENSEARCH_INITIAL_ADMIN_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")
+    auth = ("admin", OPENSEARCH_INITIAL_ADMIN_PASSWORD)
+
+    client = OpenSearch(
+        hosts=[{"host": host, "port": port}],
+        http_auth=auth,
+        use_ssl=True,
+        verify_certs=False,
+        ssl_assert_hostname=False,
+        ssl_show_warn=False,
+    )
+
+    # インデックスを作成
+    if not client.indices.exists(index="related_search_word_log"):
+        PastSearchLogDocument.init(using=client, index="related_search_word_log")
+
+    # 単純化して、スペース区切りで２つの検索ワードのみ対応する
+    if len(search_word.split(" ")) != 2:
+        return
+    else:
+        query, related_search_word = search_word.split(" ")
+        id = "_".join([query, related_search_word])
+
+        # ドキュメントがなければ count　を 1で作成、すでにあれば count を 1 増やす
+        client.update(
+            id=id,
+            index="related_search_word_log",
+            body={
+                "script": {
+                    "source": "ctx._source.count += 1",
+                    "lang": "painless",
+                },
+                "upsert": {
+                    "search_query": query,
+                    "related_search_word": related_search_word,
+                    "count": 1,
+                },
+            },
+        )

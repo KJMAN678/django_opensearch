@@ -9,7 +9,7 @@ from search.documents import (
     PastSearchLogDocument,
     RelatedSearchWordLogDocument,
 )
-from search.search_log import search_log
+from search.search_log import search_log, related_search_word_log
 
 
 class BlogListView(FormView):
@@ -24,46 +24,8 @@ class BlogListView(FormView):
         # 過去の検索ログを取得
         past_search_logs = search_log(search_word)
 
-        # 関連の検索ワードを保存
-        host = "opensearch"
-        port = 9200
-
-        env = environ.Env()
-        environ.Env.read_env(".env")
-        OPENSEARCH_INITIAL_ADMIN_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")
-        auth = ("admin", OPENSEARCH_INITIAL_ADMIN_PASSWORD)
-
-        client = OpenSearch(
-            hosts=[{"host": host, "port": port}],
-            http_auth=auth,
-            use_ssl=True,
-            verify_certs=False,
-            ssl_assert_hostname=False,
-            ssl_show_warn=False,
-        )
-
-        # インデックスを作成
-        if not client.indices.exists(index="related_search_word_log"):
-            PastSearchLogDocument.init(using=client, index="related_search_word_log")
-
-        query, related_search_word = search_word.split(" ")
-        id = "_".join([query, related_search_word])
-
-        client.update(
-            id=id,
-            index="related_search_word_log",
-            body={
-                "script": {
-                    "source": "ctx._source.count += 1",
-                    "lang": "painless",
-                },
-                "upsert": {
-                    "search_query": query,
-                    "related_search_word": related_search_word,
-                    "count": 1,
-                },
-            },
-        )
+        # 関連の検索ワードを取得
+        related_search_word_logs = related_search_word_log(search_word)
 
         # 検索ロジックを実行
         posts, suggestions, past_search_logs, related_search_word_logs = self.search(
