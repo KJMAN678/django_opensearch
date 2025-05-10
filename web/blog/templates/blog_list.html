@@ -63,5 +63,33 @@
                 <p>該当するサジェストはありません。</p>
             {% endif %}
         </div>
+        <div class="past-search-logs">
+            <h3>過去の検索ログ:</h3>
+            <ul>
+                {% if past_search_logs %}
+                    {% for log in past_search_logs %}
+                        <li class="past-search-log-item">
+                            {{ log.search_word }}
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <p>過去の検索ログはありません。</p>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="related-search-word-logs">
+            <h3>関連の検索ワード:</h3>
+            <ul>
+                {% if related_search_word_logs %}
+                    {% for log in related_search_word_logs %}
+                        <li class="related-search-word-log-item">
+                            {{ log.related_search_word }}
+                    </li>
+                {% endfor %}
+            {% else %}
+                <p>関連の検索ワードはありません。</p>
+            {% endif %}
+        </ul>
+    </div>
 </body>
 </html>

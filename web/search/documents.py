@@ -1,4 +1,4 @@
-from opensearchpy import Document, Text, Completion
+from opensearchpy import Document, Text, Completion, Date, Keyword, Integer
 
 
 class BlogDocument(Document):
@@ -34,3 +34,27 @@ class BlogDocument(Document):
                 "title_suggest": {"type": "completion", "analyzer": "sudachi_analyzer"}
             }
         }
+
+
+class PastSearchLogDocument(Document):
+    """そのユーザーの過去の検索ログを保存・表示するためのドキュメント"""
+
+    id = Text()
+    user_id = Text()
+    search_word = Keyword()
+    created_at = Date()
+
+    class Meta:
+        name = "past_search_log"
+
+
+class RelatedSearchWordLogDocument(Document):
+    """関連の検索ワードを保存・表示するためのドキュメント"""
+
+    id = Text()
+    search_query = Keyword()
+    related_search_word = Keyword()
+    count = Integer()
+
+    class Meta:
+        name = "related_search_word_log"

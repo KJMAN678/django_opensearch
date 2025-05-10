@@ -12,7 +12,8 @@ $ docker compose up -d
 
 # コンテナの再作成
 $ docker compose down
-$ docker compose build --no-cache
+$ docker compose build
+$ docker compose up -d
 
 # キャッシュ削除
 $ docker builder prune -f
