@@ -19,7 +19,7 @@ $ docker compose up -d
 $ docker builder prune -f
 
 # OpenSearch DashBoard
-http://localhost:5601/app/home#/
+http://localhost:5601/app/opensearch-query-workbench#/
 
 # Django 検索画面
 http://localhost:8000/blog/
@@ -79,3 +79,29 @@ $ cd ..
 - 下記のDockerfileの記述を使用した
   - [krayinc/opensearch:2.17.1-sudachi-ingest-attachment](https://hub.docker.com/layers/krayinc/opensearch/2.17.1-sudachi-ingest-attachment/images/sha256-724966037bde19ced8fbc04dfbe1f78d7ef6363f3f7b1f19dfdcc1b8525107d3)
   - [opensearchproject/opensearch:2.17.1](https://hub.docker.com/layers/opensearchproject/opensearch/2.17.1/images/sha256-7d961ff222c267093b7b95fc2e397d31a06a42b6f3c42ee67fc5788417a274bf)
+
+- サジェスト
+  - [Elasticsearchで関連キーワード機能がどれだけ低コストで実装できるかの旅路](https://www.m3tech.blog/entry/es-related-keywords)
+  - [Significant terms aggregations](https://docs.opensearch.org/docs/latest/aggregations/bucket/significant-terms/)
+  - [Terms aggregations](https://docs.opensearch.org/docs/latest/aggregations/bucket/terms/)
+  - [Aggregations](https://docs.opensearch.org/docs/latest/aggregations/)
+  - [OpenSearch・Go・MUI で実現する検索サジェスト機能](https://koko206.hatenablog.com/entry/2024/07/30/035720)
+  - [Update document](https://docs.opensearch.org/docs/latest/api-reference/document-apis/update-document/)
+  - [Update by query](https://docs.opensearch.org/docs/latest/api-reference/document-apis/update-by-query/#request-body-options)
+```sh
+{
+  "query": {
+    "term": {
+      "oldValue": 20
+    }
+  },
+  "script" : {
+    "source": "ctx._source.oldValue += params.newValue",
+    "lang": "painless",
+    "params" : {
+      "newValue" : 10
+    }
+  }
+}
+```
+- [upsert](https://docs.opensearch.org/docs/latest/api-reference/document-apis/update-document/#using-the-upsert-operation)
