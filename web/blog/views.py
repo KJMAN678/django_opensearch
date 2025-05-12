@@ -28,9 +28,13 @@ class BlogListView(FormView):
         related_search_word_logs = related_search_word_log(search_word)
 
         # 検索ロジックを実行
-        posts, suggestions, past_search_logs, related_search_word_logs = self.search(
-            search_word
-        )
+        (
+            posts,
+            suggestions,
+            past_search_logs,
+            related_search_word_logs,
+            title_aggression_keywords,
+        ) = self.search(search_word)
 
         # フォームと検索結果をテンプレートに渡す
         return render(
@@ -113,6 +117,7 @@ class BlogListView(FormView):
             index=BlogDocument._index._name,
             body={
                 "query": {"match": {"title": search_word}},
+                "size": 1,
                 "suggest": {
                     "title_suggest": {
                         "prefix": search_word,
@@ -158,11 +163,48 @@ class BlogListView(FormView):
             body={
                 "query": {"match": {"search_query": search_word.split(" ")[0]}},
                 "size": 5,
-                "sort": {"count": {"order": "desc"}},
+                # "sort": {"count": {"order": "desc"}},
             },
         )
         related_search_word_logs = []
         for hit in related_search_word_response["hits"]["hits"]:
             related_search_word_logs.append(hit["_source"])
 
-        return posts, suggestions, past_search_logs, related_search_word_logs
+        # タイトルのキーワードで集計
+        title_aggression_response = client.search(
+            index=BlogDocument._index._name,
+            body={
+                "size": 0,
+                "query": {
+                    "match": {
+                        "title_aggression": {"query": search_word, "operator": "and"}
+                    }
+                },
+                "aggs": {
+                    "keywords": {
+                        "terms": {
+                            "field": "title_aggression",
+                            "order": {"_count": "desc"},
+                            "size": 10,
+                        }
+                    }
+                },
+            },
+        )
+
+        print(
+            title_aggression_response["aggregations"]["keywords"]["buckets"],
+            flush=True,
+        )
+        print(title_aggression_response, flush=True)
+        title_aggression_keywords = []
+        for hit in title_aggression_response["aggregations"]["keywords"]["buckets"]:
+            title_aggression_keywords.append(hit["key"])
+
+        return (
+            posts,
+            suggestions,
+            past_search_logs,
+            related_search_word_logs,
+            title_aggression_keywords,
+        )

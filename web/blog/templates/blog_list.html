@@ -91,5 +91,13 @@
             {% endif %}
         </ul>
     </div>
+    <div class="title-aggression-keywords">
+        <h3>タイトルのキーワードで集計:</h3>
+        <ul>
+            {% for keyword in title_aggression_keywords %}
+                <li class="title-aggression-keyword-item">{{ keyword }}</li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>
