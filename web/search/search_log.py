@@ -67,25 +67,40 @@ def related_search_word_log(search_word):
         PastSearchLogDocument.init(using=client, index="related_search_word_log")
 
     # 単純化して、スペース区切りで２つの検索ワードのみ対応する
-    if len(search_word.split(" ")) != 2:
+    if len(search_word.split(" ")) == 1:
         return
     else:
-        query, related_search_word = search_word.split(" ")
-        id = "_".join([query, related_search_word])
+        combinations = create_combinations(search_word)
 
-        # ドキュメントがなければ count　を 1で作成、すでにあれば count を 1 増やす
-        client.update(
-            id=id,
-            index="related_search_word_log",
-            body={
-                "script": {
-                    "source": "ctx._source.count += 1",
-                    "lang": "painless",
+        for combo in combinations:
+            related_search_word = combo[0]
+            query = " ".join(combo[1])
+            id = query + related_search_word
+
+            # ドキュメントがなければ count　を 1で作成、すでにあれば count を 1 増やす
+            client.update(
+                id=id,
+                index="related_search_word_log",
+                body={
+                    "script": {
+                        "source": "ctx._source.count += 1",
+                        "lang": "painless",
+                    },
+                    "upsert": {
+                        "search_query": query,
+                        "related_search_word": related_search_word,
+                        "count": 1,
+                    },
                 },
-                "upsert": {
-                    "search_query": query,
-                    "related_search_word": related_search_word,
-                    "count": 1,
-                },
-            },
-        )
+            )
+
+
+def create_combinations(string):
+    # 空白で区切ってリスト化
+    arr = string.split()
+    result = []
+    for i in range(len(arr)):
+        current = arr[i]
+        rest = arr[:i] + arr[i + 1 :]
+        result.append((current, rest))
+    return result

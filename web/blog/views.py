@@ -9,6 +9,7 @@ from search.documents import (
     PastSearchLogDocument,
     RelatedSearchWordLogDocument,
 )
+from search.search_log import search_log, related_search_word_log
 
 
 class BlogListView(FormView):
@@ -21,10 +22,10 @@ class BlogListView(FormView):
         search_word = form.cleaned_data.get("search_word")
 
         # # 過去の検索ログを取得
-        # past_search_logs = search_log(search_word)
+        search_log(search_word)
 
         # # 関連の検索ワードを取得
-        # related_search_word_logs = related_search_word_log(search_word)
+        related_search_word_log(search_word)
 
         # 検索ロジックを実行
         (
@@ -155,7 +156,7 @@ class BlogListView(FormView):
                     }
                 },
                 "size": 5,
-                # "sort": {"created_at": {"order": "desc"}},
+                "sort": {"created_at": {"order": "desc"}},
             },
         )
 
@@ -164,18 +165,23 @@ class BlogListView(FormView):
             past_search_logs.append(hit["_source"])
 
         # 関連の検索ワードを取得
+        print("search_word", search_word, flush=True)
         related_search_word_response = client.search(
             index=RelatedSearchWordLogDocument._index._name,
             body={
-                "query": {"match": {"search_query": search_word.split(" ")[0]}},
+                "query": {"match_phrase": {"search_query": search_word}},
+                # "query": {"term": {"search_query": search_word}},
                 "size": 5,
-                # "sort": {"count": {"order": "desc"}},
+                "sort": {"count": {"order": "desc"}},
             },
         )
+        print(related_search_word_response["hits"]["hits"], flush=True)
         related_search_word_logs = []
         for hit in related_search_word_response["hits"]["hits"]:
-            related_search_word_logs.append(hit["_source"])
+            # print(hit["_source"]["related_search_word"], flush=True)
+            related_search_word_logs.append(hit["_source"]["related_search_word"])
 
+        print(related_search_word_logs, flush=True)
         # タイトルのキーワードで集計
         title_aggression_response = client.search(
             index=BlogDocument._index._name,
@@ -192,10 +198,10 @@ class BlogListView(FormView):
             },
         )
 
-        print(
-            title_aggression_response["aggregations"]["hoge_keywords"]["buckets"],
-            flush=True,
-        )
+        # print(
+        #     title_aggression_response["aggregations"]["hoge_keywords"]["buckets"],
+        #     flush=True,
+        # )
         # print(
         #     title_aggression_response,
         #     flush=True,
