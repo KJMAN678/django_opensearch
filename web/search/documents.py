@@ -6,8 +6,11 @@ class BlogDocument(Document):
     title = Text()
     title_suggest = Completion()
     content = Text()
-    # title_aggression = Text()
-    title_aggression = Keyword()
+    title_aggression = Text(
+        fielddata=True,
+        analyzer="sudachi",
+    )
+    # title_aggression = Keyword()
 
     class Meta:
         name = "blog"

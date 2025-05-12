@@ -147,9 +147,15 @@ class BlogListView(FormView):
         past_search_logs_response = client.search(
             index=PastSearchLogDocument._index._name,
             body={
-                "query": {"match": {"user_id": 1}},
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"match": {"user_id": 1}},
+                        ]
+                    }
+                },
                 "size": 5,
-                "sort": {"created_at": {"order": "desc"}},
+                # "sort": {"created_at": {"order": "desc"}},
             },
         )
 
@@ -174,50 +180,26 @@ class BlogListView(FormView):
         title_aggression_response = client.search(
             index=BlogDocument._index._name,
             body={
-                #     "size": 5,
-                #     "query": {
-                #         "match": {
-                #             "query": search_word,
-                #             # "title_aggression": {"query": search_word, "operator": "and"}
-                #         }
-                #     },
-                #     "aggs": {
-                #         "keywords": {
-                #             "terms": {
-                #                 "field": "title_aggression",
-                #                 # "order": {"_count": "desc"},
-                #                 "size": 10,
-                #             }
-                #         }
-                #     },
-                # },
-                # "query": {"match": {"title_aggression": search_word}},
-                # "size": 0,
                 "query": {"match": {"title_aggression": search_word}},
                 "aggs": {
                     "hoge_keywords": {
                         "terms": {
                             "field": "title_aggression",
-                            "size": 1,
+                            "size": 5,
                         }
                     }
-                    # "top_hits_hoge": {
-                    #     "top_hits": {
-                    #         "size": 1,
-                    #     }
-                    # }
                 },
             },
         )
 
         print(
-            # title_aggression_response["aggregations"]["keywords"]["buckets"],
+            title_aggression_response["aggregations"]["hoge_keywords"]["buckets"],
             flush=True,
         )
-        print(
-            title_aggression_response,
-            flush=True,
-        )
+        # print(
+        #     title_aggression_response,
+        #     flush=True,
+        # )
         title_aggression_keywords = []
         for hit in title_aggression_response["aggregations"]["hoge_keywords"][
             "buckets"
