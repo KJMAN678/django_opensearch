@@ -6,7 +6,8 @@ class BlogDocument(Document):
     title = Text()
     title_suggest = Completion()
     content = Text()
-    title_aggression = Text()
+    # title_aggression = Text()
+    title_aggression = Keyword()
 
     class Meta:
         name = "blog"
@@ -32,12 +33,17 @@ class BlogDocument(Document):
         }
         mappings = {
             "properties": {
+                # "title": {
+                #     "type": "text",
+                #     "analyzer": "sudachi_analyzer",
+                #     "fielddata": True,
+                # },
                 "title_suggest": {"type": "completion", "analyzer": "sudachi_analyzer"},
-                "title_aggression": {
-                    "type": "text",
-                    "fielddata": True,
-                    "analyzer": "sudachi_analyzer",
-                },
+                # "title_aggression": {
+                #     "type": "text",
+                #     "fielddata": True,
+                #     "analyzer": "sudachi_analyzer",
+                # },
             }
         }
 

@@ -9,7 +9,6 @@ from search.documents import (
     PastSearchLogDocument,
     RelatedSearchWordLogDocument,
 )
-from search.search_log import search_log, related_search_word_log
 
 
 class BlogListView(FormView):
@@ -21,11 +20,11 @@ class BlogListView(FormView):
         # フォームから検索ワードを取得
         search_word = form.cleaned_data.get("search_word")
 
-        # 過去の検索ログを取得
-        past_search_logs = search_log(search_word)
+        # # 過去の検索ログを取得
+        # past_search_logs = search_log(search_word)
 
-        # 関連の検索ワードを取得
-        related_search_word_logs = related_search_word_log(search_word)
+        # # 関連の検索ワードを取得
+        # related_search_word_logs = related_search_word_log(search_word)
 
         # 検索ロジックを実行
         (
@@ -46,6 +45,7 @@ class BlogListView(FormView):
                 "suggestions": suggestions,
                 "past_search_logs": past_search_logs,
                 "related_search_word_logs": related_search_word_logs,
+                "title_aggression_keywords": title_aggression_keywords,
             },
         )
 
@@ -191,8 +191,22 @@ class BlogListView(FormView):
                 #         }
                 #     },
                 # },
-                "query": {"match": {"title": search_word}},
-                "size": 1,
+                # "query": {"match": {"title_aggression": search_word}},
+                # "size": 0,
+                "query": {"match": {"title_aggression": search_word}},
+                "aggs": {
+                    "hoge_keywords": {
+                        "terms": {
+                            "field": "title_aggression",
+                            "size": 1,
+                        }
+                    }
+                    # "top_hits_hoge": {
+                    #     "top_hits": {
+                    #         "size": 1,
+                    #     }
+                    # }
+                },
             },
         )
 
@@ -200,10 +214,15 @@ class BlogListView(FormView):
             # title_aggression_response["aggregations"]["keywords"]["buckets"],
             flush=True,
         )
-        print(title_aggression_response, flush=True)
+        print(
+            title_aggression_response,
+            flush=True,
+        )
         title_aggression_keywords = []
-        # for hit in title_aggression_response["aggregations"]["keywords"]["buckets"]:
-        #     title_aggression_keywords.append(hit["key"])
+        for hit in title_aggression_response["aggregations"]["hoge_keywords"][
+            "buckets"
+        ]:
+            title_aggression_keywords.append(hit["key"])
 
         return (
             posts,
