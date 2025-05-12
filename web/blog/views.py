@@ -174,32 +174,36 @@ class BlogListView(FormView):
         title_aggression_response = client.search(
             index=BlogDocument._index._name,
             body={
-                "size": 0,
-                "query": {
-                    "match": {
-                        "title_aggression": {"query": search_word, "operator": "and"}
-                    }
-                },
-                "aggs": {
-                    "keywords": {
-                        "terms": {
-                            "field": "title_aggression",
-                            "order": {"_count": "desc"},
-                            "size": 10,
-                        }
-                    }
-                },
+                #     "size": 5,
+                #     "query": {
+                #         "match": {
+                #             "query": search_word,
+                #             # "title_aggression": {"query": search_word, "operator": "and"}
+                #         }
+                #     },
+                #     "aggs": {
+                #         "keywords": {
+                #             "terms": {
+                #                 "field": "title_aggression",
+                #                 # "order": {"_count": "desc"},
+                #                 "size": 10,
+                #             }
+                #         }
+                #     },
+                # },
+                "query": {"match": {"title": search_word}},
+                "size": 1,
             },
         )
 
         print(
-            title_aggression_response["aggregations"]["keywords"]["buckets"],
+            # title_aggression_response["aggregations"]["keywords"]["buckets"],
             flush=True,
         )
         print(title_aggression_response, flush=True)
         title_aggression_keywords = []
-        for hit in title_aggression_response["aggregations"]["keywords"]["buckets"]:
-            title_aggression_keywords.append(hit["key"])
+        # for hit in title_aggression_response["aggregations"]["keywords"]["buckets"]:
+        #     title_aggression_keywords.append(hit["key"])
 
         return (
             posts,
