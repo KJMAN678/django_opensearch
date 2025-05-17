@@ -3,3 +3,5 @@
 __pycache__/
 opensearch/config/certs/*.pem
 opensearch/config/certs/*.srl
+opensearch/backup/*
+!opensearch/backup/.gitkeep
