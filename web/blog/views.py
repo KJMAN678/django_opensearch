@@ -2,14 +2,12 @@ from django.shortcuts import render
 from django.views.generic import FormView
 from blog.forms import SearchWordForm
 from django.urls import reverse_lazy
-from opensearchpy import OpenSearch
-import environ
-from search.documents import (
-    BlogDocument,
-    PastSearchLogDocument,
-    RelatedSearchWordLogDocument,
+from search.search_log import (
+    make_client,
+    search_log,
+    related_search_word_log,
+    no_order_related_search_word_log,
 )
-from search.search_log import search_log, related_search_word_log
 
 
 class BlogListView(FormView):
@@ -21,11 +19,14 @@ class BlogListView(FormView):
         # フォームから検索ワードを取得
         search_word = form.cleaned_data.get("search_word")
 
-        # # 過去の検索ログを取得
+        # 過去の検索ログをインデックスに保存
         search_log(search_word)
 
-        # # 関連の検索ワードを取得
+        # 関連の検索ワードを取得
         related_search_word_log(search_word)
+
+        # ワードの順番を考慮しない、関連の検索ワードを取得
+        no_order_related_search_word_log(search_word)
 
         # 検索ロジックを実行
         (
@@ -33,7 +34,9 @@ class BlogListView(FormView):
             suggestions,
             past_search_logs,
             related_search_word_logs,
+            no_order_related_search_word_logs,
             title_aggression_keywords,
+            past_search_aggregated_logs,
         ) = self.search(search_word)
 
         # フォームと検索結果をテンプレートに渡す
@@ -46,7 +49,9 @@ class BlogListView(FormView):
                 "suggestions": suggestions,
                 "past_search_logs": past_search_logs,
                 "related_search_word_logs": related_search_word_logs,
+                "no_order_related_search_word_logs": no_order_related_search_word_logs,
                 "title_aggression_keywords": title_aggression_keywords,
+                "past_search_aggregated_logs": past_search_aggregated_logs,
             },
         )
 
@@ -55,26 +60,11 @@ class BlogListView(FormView):
 
     def get_suggestions(self, search_word):
         # サジェスト用の検索ロジック
-        host = "opensearch"
-        port = 9200
-
-        env = environ.Env()
-        environ.Env.read_env(".env")
-        OPENSEARCH_INITIAL_ADMIN_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")
-        auth = ("admin", OPENSEARCH_INITIAL_ADMIN_PASSWORD)
-
-        client = OpenSearch(
-            hosts=[{"host": host, "port": port}],
-            http_auth=auth,
-            use_ssl=True,
-            verify_certs=False,
-            ssl_assert_hostname=False,
-            ssl_show_warn=False,
-        )
+        client = make_client()
 
         # サジェスト用の検索クエリ
         response = client.search(
-            index=BlogDocument._index._name,
+            index="blog",
             body={
                 "query": {
                     "multi_match": {
@@ -96,26 +86,11 @@ class BlogListView(FormView):
         return None
 
     def search(self, search_word):
-        host = "opensearch"
-        port = 9200
-
-        env = environ.Env()
-        environ.Env.read_env(".env")
-        OPENSEARCH_INITIAL_ADMIN_PASSWORD = env("OPENSEARCH_INITIAL_ADMIN_PASSWORD")
-        auth = ("admin", OPENSEARCH_INITIAL_ADMIN_PASSWORD)
-
-        client = OpenSearch(
-            hosts=[{"host": host, "port": port}],
-            http_auth=auth,
-            use_ssl=True,
-            verify_certs=False,
-            ssl_assert_hostname=False,
-            ssl_show_warn=False,
-        )
+        client = make_client()
 
         # データの検索
         response = client.search(
-            index=BlogDocument._index._name,
+            index="blog",
             body={
                 "query": {"match": {"title": search_word}},
                 "size": 1,
@@ -146,7 +121,7 @@ class BlogListView(FormView):
 
         # 過去の検索ログを取得
         past_search_logs_response = client.search(
-            index=PastSearchLogDocument._index._name,
+            index="past_search_log",
             body={
                 "query": {
                     "bool": {
@@ -165,26 +140,39 @@ class BlogListView(FormView):
             past_search_logs.append(hit["_source"])
 
         # 関連の検索ワードを取得
-        print("search_word", search_word, flush=True)
-        related_search_word_response = client.search(
-            index=RelatedSearchWordLogDocument._index._name,
-            body={
-                "query": {"match_phrase": {"search_query": search_word}},
-                # "query": {"term": {"search_query": search_word}},
-                "size": 5,
-                "sort": {"count": {"order": "desc"}},
-            },
-        )
-        print(related_search_word_response["hits"]["hits"], flush=True)
         related_search_word_logs = []
-        for hit in related_search_word_response["hits"]["hits"]:
-            # print(hit["_source"]["related_search_word"], flush=True)
-            related_search_word_logs.append(hit["_source"]["related_search_word"])
+        # 関連キーワードのインデックスがあってもドキュメントが空だと sort count でエラーが出るので、
+        # ドキュメントが空ではないかどうかを確認する
+        if client.count(index="related_search_word_log")["count"] > 0:
+            related_search_word_response = client.search(
+                index="related_search_word_log",
+                body={
+                    "query": {"match_phrase": {"search_query": search_word}},
+                    "size": 5,
+                    "sort": {"count": {"order": "desc"}},
+                },
+            )
 
-        print(related_search_word_logs, flush=True)
+            for hit in related_search_word_response["hits"]["hits"]:
+                related_search_word_logs.append(hit["_source"]["related_search_word"])
+
+        # ワードの順番を考慮しない、関連の検索ワードを取得
+        no_order_related_search_word_logs = []
+
+        if client.count(index="no_order_related_search_word_log")["count"] > 0:
+            no_order_related_search_word_response = client.search(
+                index="no_order_related_search_word_log",
+                body={"query": {"match_phrase": {"search_query": search_word}}},
+            )
+
+            for hit in no_order_related_search_word_response["hits"]["hits"]:
+                no_order_related_search_word_logs.append(
+                    hit["_source"]["related_search_word"]
+                )
+
         # タイトルのキーワードで集計
         title_aggression_response = client.search(
-            index=BlogDocument._index._name,
+            index="blog",
             body={
                 "query": {"match": {"title_aggression": search_word}},
                 "aggs": {
@@ -198,24 +186,46 @@ class BlogListView(FormView):
             },
         )
 
-        # print(
-        #     title_aggression_response["aggregations"]["hoge_keywords"]["buckets"],
-        #     flush=True,
-        # )
-        # print(
-        #     title_aggression_response,
-        #     flush=True,
-        # )
         title_aggression_keywords = []
         for hit in title_aggression_response["aggregations"]["hoge_keywords"][
             "buckets"
         ]:
             title_aggression_keywords.append(hit["key"])
 
+        # 過去履歴を集計
+        past_search_logs_response = client.search(
+            index="past_search_log",
+            body={
+                "query": {
+                    "match": {
+                        "search_word.standard": {
+                            "query": search_word,
+                        }
+                    }
+                },
+                "aggs": {
+                    "past_search_logs": {
+                        "terms": {
+                            "field": "search_word",
+                            "size": 5,
+                        }
+                    }
+                },
+            },
+        )
+
+        past_search_aggregated_logs = []
+        for hit in past_search_logs_response["aggregations"]["past_search_logs"][
+            "buckets"
+        ]:
+            past_search_aggregated_logs.append(hit["key"])
+
         return (
             posts,
             suggestions,
             past_search_logs,
             related_search_word_logs,
+            no_order_related_search_word_logs,
             title_aggression_keywords,
+            past_search_aggregated_logs,
         )

@@ -16,6 +16,12 @@ RUN touch /usr/share/opensearch/config/synonyms.txt
 
 COPY synonyms.txt* /usr/share/opensearch/config/synonyms.txt
 
+# RUN mkdir -p /usr/share/opensearch/config/backup
+# COPY backup/* /usr/share/opensearch/config/backup/
+
+# RUN mkdir -p /usr/share/opensearch/config/opensearch-security
+# COPY opensearch-security/* /usr/share/opensearch/config/opensearch-security/
+
 # RUN yum update -y
 # RUN yum install -y sudo
 # RUN sudo yum install openssl -y

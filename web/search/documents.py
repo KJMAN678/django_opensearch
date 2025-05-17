@@ -36,17 +36,7 @@ class BlogDocument(Document):
         }
         mappings = {
             "properties": {
-                # "title": {
-                #     "type": "text",
-                #     "analyzer": "sudachi_analyzer",
-                #     "fielddata": True,
-                # },
                 "title_suggest": {"type": "completion", "analyzer": "sudachi_analyzer"},
-                # "title_aggression": {
-                #     "type": "text",
-                #     "fielddata": True,
-                #     "analyzer": "sudachi_analyzer",
-                # },
             }
         }
 
@@ -73,3 +63,15 @@ class RelatedSearchWordLogDocument(Document):
 
     class Meta:
         name = "related_search_word_log"
+
+
+class NoOrderRelatedSearchWordLogDocument(Document):
+    """ワードの順番を考慮しない、関連の検索ワードを保存・表示するためのドキュメント"""
+
+    id = Text()
+    search_query = Keyword()
+    related_search_word = Keyword()
+    count = Integer()
+
+    class Meta:
+        name = "no_order_related_search_word_log"

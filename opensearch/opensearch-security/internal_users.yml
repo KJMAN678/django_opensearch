@@ -1,0 +1,6 @@
+admin:
+  hash: "$2y$12$SdV8OwFG.dVJmR5kPiKu8OL7I4wHpV7Bw4Z4XbZSu0u8HioiWF9tC" # admin のパスワードハッシュ
+  reserved: true
+  backend_roles:
+    - "admin"
+  description: "Admin user"

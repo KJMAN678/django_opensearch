@@ -10,16 +10,21 @@ DJANGO_SUPERUSER_PASSWORD=hoge
 # コンテナ立上げ
 $ docker compose up -d
 
+- 下記4つ + 初期化処理を実行するコンテナ再作成のスクリプト
+$ source ./container_remake.sh
+
 # コンテナの再作成
 $ docker compose down
 $ docker compose build
 $ docker compose up -d
-
 # キャッシュ削除
 $ docker builder prune -f
 
 # OpenSearch DashBoard
 http://localhost:5601/app/opensearch-query-workbench#/
+
+$ select * from related_search_word_log;
+$ select * from no_order_related_search_word_log;
 
 # Django 検索画面
 http://localhost:8000/blog/
@@ -28,16 +33,19 @@ http://localhost:8000/admin/
 ```
 
 ```sh
-$ docker compose run --rm web uv run manage.py migrate
+- 下記の4つのスクリプトを実行して初期化する
+$ source ./initialize_script.sh
 
+$ docker compose run --rm web uv run manage.py migrate
 # スーパーユーザーの作成
 $ docker compose run --rm web uv run manage.py createsuperuser --noinput
-
 # ダミーデータの登録
 $ docker compose run --rm web uv run manage.py register_fake_blog_model --num 100
-
 # OpenSearch のインデックス作成, 検索
 $ docker compose run --rm web uv run manage.py init_index
+
+$ docker compose run --rm web uv run manage.py make_backup
+$ docker compose run --rm web uv run manage.py restore_backup
 ```
 
 ```sh
@@ -60,6 +68,8 @@ $ docker compose run --rm web uv run manage.py register_fake_blog_model --num 10
 # OpenSearch のインデックス作成, 検索
 $ docker compose run --rm web uv run manage.py init_index
 $ docker compose run --rm web uv run manage.py search
+
+$ docker compose run --rm web uv run manage.py make_backup
 ```
 
 ```sh

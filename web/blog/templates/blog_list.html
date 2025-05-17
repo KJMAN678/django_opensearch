@@ -91,6 +91,20 @@
             {% endif %}
         </ul>
     </div>
+    <div class="no_order_related_search_word_logs">
+        <h3>ワードの順番を考慮しない、関連の検索ワード:</h3>
+        <ul>
+            {% if no_order_related_search_word_logs %}
+                {% for log in no_order_related_search_word_logs %}
+                    <li class="no_order_related_search_word_log-item">
+                        {{ log }}
+                    </li>
+                {% endfor %}
+            {% else %}
+                <p>ワードの順番を考慮しない、関連の検索ワードはありません。</p>
+            {% endif %}
+        </ul>
+    </div>
     <div class="title-aggression-keywords">
         <h3>タイトルのキーワードで集計:</h3>
         <ul>
@@ -100,6 +114,18 @@
                 {% endfor %}
             {% else %}
                 <p>タイトルのキーワードはありません。</p>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="past-search-aggregated-logs">
+        <h3>過去の検索ワードで集計:</h3>
+        <ul>
+            {% if past_search_aggregated_logs %}
+                {% for log in past_search_aggregated_logs %}
+                    <li class="past-search-aggregated-log-item">{{ log }}</li>
+                {% endfor %}
+            {% else %}
+                <p>過去の検索ワードはありません。</p>
             {% endif %}
         </ul>
     </div>

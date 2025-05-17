@@ -1,0 +1,10 @@
+admin:
+  cluster_permissions:
+    - "cluster_all"
+    - "cluster:admin/opensearch/snapshot/*"
+    - "cluster:admin/repository/*"
+  index_permissions:
+    - index_patterns:
+      - "*"
+      allowed_actions:
+        - "indices_all"
