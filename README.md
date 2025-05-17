@@ -6,6 +6,8 @@ DJANGO_SUPERUSER_EMAIL=hoge@hoge.com
 DJANGO_SUPERUSER_PASSWORD=hoge
 ```
 
+source ./generate_certs.sh
+
 ```sh
 # コンテナ立上げ
 $ docker compose up -d

@@ -1,4 +1,5 @@
 *.pyc
 .env
 __pycache__/
-backup/
+opensearch/config/certs/*.pem
+opensearch/config/certs/*.srl

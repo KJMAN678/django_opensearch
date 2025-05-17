@@ -1,3 +1,9 @@
+_meta:
+  type: "rolesmapping"
+  config_version: 2
+
+# 管理者ロールのマッピング
 admin:
+  reserved: true
   users:
-    - "admin"
+  - "admin"

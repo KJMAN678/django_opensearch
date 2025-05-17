@@ -1,0 +1,19 @@
+# OpenSearch基本設定
+cluster.name: opensearch-cluster
+node.name: opensearch-node
+path.repo: ["/usr/share/opensearch/config/backup"]
+
+# セキュリティプラグイン設定
+plugins.security.ssl.transport.pemcert_filepath: certs/node.pem
+plugins.security.ssl.transport.pemkey_filepath: certs/node-key.pem
+plugins.security.ssl.transport.pemtrustedcas_filepath: certs/root-ca.pem
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemcert_filepath: certs/node.pem
+plugins.security.ssl.http.pemkey_filepath: certs/node-key.pem
+plugins.security.ssl.http.pemtrustedcas_filepath: certs/root-ca.pem
+plugins.security.allow_default_init_securityindex: true
+plugins.security.authcz.admin_dn:
+  - "CN=admin,OU=IT,O=YourOrg,L=Tokyo,ST=Tokyo,C=JP"
+
+# メモリ設定
+bootstrap.memory_lock: true

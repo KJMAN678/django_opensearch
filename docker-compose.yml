@@ -4,15 +4,17 @@ services:
       context: ./opensearch
     container_name: opensearch
     environment:
-      - discovery.type=single-node
-      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
-      # - "path.repo=/usr/share/opensearch/config/backup"
-      # - "plugins.security.allow_default_init_securityindex=true"
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
-      - OPENSEARCH_INITIAL_ADMIN_USERNAME=admin
-    # volumes:
-    #   - ./opensearch/backup:/usr/share/opensearch/config/backup
-    #   - ./opensearch-security:/usr/share/opensearch/config/opensearch-security
+      discovery.type: single-node
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      path.repo: /usr/share/opensearch/config/backup
+      # plugins.security.allow_default_init_securityindex: true
+      OPENSEARCH_INITIAL_ADMIN_USERNAME: admin
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      DISABLE_INSTALL_DEMO_CONFIG: false
+    volumes:
+      - ./opensearch/backup:/usr/share/opensearch/config/backup
+      # - ./opensearch/opensearch-security:/usr/share/opensearch/config/opensearch-security
+      # - ./opensearch/config/certs:/usr/share/opensearch/config/certs
     ulimits:
       memlock:
         soft: -1 # Set memlock to unlimited (no soft or hard limit)
@@ -48,6 +50,8 @@ services:
       - "DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}"
       - "DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}"
       - "DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}"
+      - "SECRET_KEY=${SECRET_KEY}"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}"
     command: uv run manage.py runserver 0.0.0.0:8000
     depends_on:
       - db

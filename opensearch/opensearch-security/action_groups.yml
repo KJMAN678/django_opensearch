@@ -1,0 +1,16 @@
+_meta:
+  type: "actiongroups"
+  config_version: 2
+
+# クラスター全体の権限
+CLUSTER_ALL:
+  - "cluster:*"
+
+# インデックス操作の権限
+INDICES_ALL:
+  - "indices:*"
+
+# スナップショット関連の権限
+SNAPSHOT_ALL:
+  - "cluster:admin/snapshot/*"
+  - "cluster:admin/repository/*"

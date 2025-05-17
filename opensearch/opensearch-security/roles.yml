@@ -1,10 +1,14 @@
+_meta:
+  type: "roles"
+  config_version: 2
+
+# 管理者ロール
 admin:
   cluster_permissions:
-    - "cluster_all"
-    - "cluster:admin/opensearch/snapshot/*"
-    - "cluster:admin/repository/*"
+  - "CLUSTER_ALL"
+  - "SNAPSHOT_ALL"
   index_permissions:
-    - index_patterns:
-      - "*"
-      allowed_actions:
-        - "indices_all"
+  - index_patterns:
+    - "*"
+    allowed_actions:
+    - "INDICES_ALL"
