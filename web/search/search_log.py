@@ -4,6 +4,7 @@ from search.documents import (
     PastSearchLogDocument,
     RelatedSearchWordLogDocument,
     NoOrderRelatedSearchWordLogDocument,
+    AggPastSearchLogDocument,
 )
 from datetime import datetime
 import uuid
@@ -51,6 +52,42 @@ def search_log(search_word):
             created_at=datetime.now(),
         )
         doc.save(using=client, index="past_search_log")
+
+
+def split_search_and_related_keywords(sentence):
+    words = sentence.split(" ")
+
+    if len(words) <= 1:
+        # 1要素以下の場合
+        search_word = sentence
+        related_word = ""
+    else:
+        # 2要素以上の場合
+        search_word = " ".join(words[0:-1])  # 最後の要素を除く全て
+        related_word = words[-1]  # 最後の要素
+
+    return search_word, related_word
+
+
+def agg_past_search_log(search_word):
+    client = make_client()
+
+    if not client.indices.exists(index="agg_past_search_log"):
+        AggPastSearchLogDocument.init(using=client, index="agg_past_search_log")
+
+    print(search_word, flush=True)
+    print(search_word.split(" ")[:-1], flush=True)
+    print(search_word.split(" ")[-1], flush=True)
+
+    doc = AggPastSearchLogDocument(
+        id=uuid.uuid4(),
+        user_id=1,
+        search_original_word=search_word,
+        search_word=" ".join(search_word.split(" ")[:-1]),
+        related_search_word=search_word.split(" ")[-1],
+        created_at=datetime.now(),
+    )
+    doc.save(using=client, index="agg_past_search_log")
 
 
 def related_search_word_log(search_word):

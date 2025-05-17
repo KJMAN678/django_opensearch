@@ -53,6 +53,20 @@ class PastSearchLogDocument(Document):
         name = "past_search_log"
 
 
+class AggPastSearchLogDocument(Document):
+    """集計対象にするための検索ログを保存するためのドキュメント"""
+
+    id = Text()
+    user_id = Text()
+    search_original_word = Keyword()
+    related_search_word = Keyword()
+    search_word = Keyword()
+    created_at = Date()
+
+    class Meta:
+        name = "agg_past_search_log"
+
+
 class RelatedSearchWordLogDocument(Document):
     """関連の検索ワードを保存・表示するためのドキュメント"""
 

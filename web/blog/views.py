@@ -7,6 +7,7 @@ from search.search_log import (
     search_log,
     related_search_word_log,
     no_order_related_search_word_log,
+    agg_past_search_log,
 )
 
 
@@ -22,6 +23,9 @@ class BlogListView(FormView):
         # 過去の検索ログをインデックスに保存
         search_log(search_word)
 
+        # 集計対象にするための検索ログを保存
+        agg_past_search_log(search_word)
+
         # 関連の検索ワードを取得
         related_search_word_log(search_word)
 
@@ -33,6 +37,7 @@ class BlogListView(FormView):
             posts,
             suggestions,
             past_search_logs,
+            agg_past_search_logs,
             related_search_word_logs,
             no_order_related_search_word_logs,
             title_aggression_keywords,
@@ -48,6 +53,7 @@ class BlogListView(FormView):
                 "posts": posts,
                 "suggestions": suggestions,
                 "past_search_logs": past_search_logs,
+                "agg_past_search_logs": agg_past_search_logs,
                 "related_search_word_logs": related_search_word_logs,
                 "no_order_related_search_word_logs": no_order_related_search_word_logs,
                 "title_aggression_keywords": title_aggression_keywords,
@@ -139,6 +145,29 @@ class BlogListView(FormView):
         for hit in past_search_logs_response["hits"]["hits"]:
             past_search_logs.append(hit["_source"])
 
+        # 集計対象にするための検索ログを取得
+        agg_past_search_logs_response = client.search(
+            index="agg_past_search_log",
+            body={
+                "query": {"match": {"search_word": search_word}},
+                "aggs": {
+                    "agg_past_search_logs": {
+                        "terms": {
+                            "field": "related_search_word",
+                            "size": 5,
+                        }
+                    }
+                },
+                "size": 5,
+            },
+        )
+        print(agg_past_search_logs_response, flush=True)
+        agg_past_search_logs = []
+        for hit in agg_past_search_logs_response["aggregations"][
+            "agg_past_search_logs"
+        ]["buckets"]:
+            agg_past_search_logs.append(hit)
+
         # 関連の検索ワードを取得
         related_search_word_logs = []
         # 関連キーワードのインデックスがあってもドキュメントが空だと sort count でエラーが出るので、
@@ -224,6 +253,7 @@ class BlogListView(FormView):
             posts,
             suggestions,
             past_search_logs,
+            agg_past_search_logs,
             related_search_word_logs,
             no_order_related_search_word_logs,
             title_aggression_keywords,

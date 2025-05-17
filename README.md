@@ -27,6 +27,7 @@ http://localhost:5601/app/opensearch-query-workbench#/
 
 $ select * from related_search_word_log;
 $ select * from no_order_related_search_word_log;
+$ select * from agg_past_search_log;
 
 # Django 検索画面
 http://localhost:8000/blog/

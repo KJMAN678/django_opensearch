@@ -91,6 +91,18 @@
             {% endif %}
         </ul>
     </div>
+    <div class="agg_past_search_logs">
+        <h3>集計対象にするための検索ログ:</h3>
+        <ul>
+            {% if agg_past_search_logs %}
+                {% for log in agg_past_search_logs %}
+                    <li class="agg_past_search_log-item">{{ log.key }}</li>
+                {% endfor %}
+            {% else %}
+                <p>集計対象にするための検索ログはありません。</p>
+            {% endif %}
+        </ul>
+    </div>
     <div class="no_order_related_search_word_logs">
         <h3>ワードの順番を考慮しない、関連の検索ワード:</h3>
         <ul>
