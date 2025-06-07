@@ -33,7 +33,7 @@ class Command(BaseCommand):
                         logs.append(
                             SearchLog(
                                 user_id=row["USER_ID"],
-                                search_query=row["SEARCH_QUERY"],
+                                search_query=row["ITEM_ID"],
                                 searched_at=searched_at,
                             )
                         )
