@@ -27,3 +27,4 @@
 - web/search/documents.py  - OpenSearch のドキュメントの定義
 - web/blog/templates/blog_list.html ... 実際に表示する検索画面のHTMLファイル
 - web/blog/models.py - データベースに登録する Blog のテーブルを定義する
+- web/blog/management/commands ... Django Command を格納するディレクトリ
