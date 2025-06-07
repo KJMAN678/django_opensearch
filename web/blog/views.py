@@ -42,6 +42,7 @@ class BlogListView(FormView):
             no_order_related_search_word_logs,
             title_aggression_keywords,
             past_search_aggregated_logs,
+            time_based_results,
         ) = self.search(search_word)
 
         # フォームと検索結果をテンプレートに渡す
@@ -58,6 +59,7 @@ class BlogListView(FormView):
                 "no_order_related_search_word_logs": no_order_related_search_word_logs,
                 "title_aggression_keywords": title_aggression_keywords,
                 "past_search_aggregated_logs": past_search_aggregated_logs,
+                "time_based_results": time_based_results,
             },
         )
 
@@ -109,6 +111,64 @@ class BlogListView(FormView):
             },
         )
 
+        # 同じ時間帯の検索ワードを集計
+        time_based_search_response = client.search(
+            index="past_search_log",
+            body={
+                "aggs": {
+                    "search_times": {
+                        "filter": {"term": {"search_word": search_word}},
+                        "aggs": {
+                            "timestamps": {
+                                "terms": {"field": "created_at", "size": 1000},
+                                "aggs": {
+                                    "related_searches": {
+                                        "reverse_nested": {},
+                                        "aggs": {
+                                            "same_time_searches": {
+                                                "filter": {
+                                                    "bool": {
+                                                        "must": [
+                                                            {
+                                                                "term": {
+                                                                    "created_at": "{{timestamp}}"
+                                                                }
+                                                            },
+                                                            {
+                                                                "bool": {
+                                                                    "must_not": [
+                                                                        {
+                                                                            "term": {
+                                                                                "search_word": search_word
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                        ]
+                                                    }
+                                                },
+                                                "aggs": {
+                                                    "related_words": {
+                                                        "terms": {
+                                                            "field": "search_word.keyword",
+                                                            "size": 5,
+                                                            "order": {"_count": "desc"},
+                                                        }
+                                                    }
+                                                },
+                                            }
+                                        },
+                                    }
+                                },
+                            }
+                        },
+                    }
+                }
+            },
+        )
+
+        # 既存のコード
         posts = []
         suggestions = []
 
@@ -161,7 +221,7 @@ class BlogListView(FormView):
                 "size": 5,
             },
         )
-        print(agg_past_search_logs_response, flush=True)
+
         agg_past_search_logs = []
         for hit in agg_past_search_logs_response["aggregations"][
             "agg_past_search_logs"
@@ -170,8 +230,6 @@ class BlogListView(FormView):
 
         # 関連の検索ワードを取得
         related_search_word_logs = []
-        # 関連キーワードのインデックスがあってもドキュメントが空だと sort count でエラーが出るので、
-        # ドキュメントが空ではないかどうかを確認する
         if client.count(index="related_search_word_log")["count"] > 0:
             related_search_word_response = client.search(
                 index="related_search_word_log",
@@ -249,6 +307,24 @@ class BlogListView(FormView):
         ]:
             past_search_aggregated_logs.append(hit["key"])
 
+        # 同じ時間帯の検索ワードの結果を処理
+        time_based_results = []
+        if "aggregations" in time_based_search_response:
+            for timestamp_bucket in time_based_search_response["aggregations"][
+                "search_times"
+            ]["timestamps"]["buckets"]:
+                timestamp = timestamp_bucket["key"]
+                for related_bucket in timestamp_bucket["related_searches"][
+                    "same_time_searches"
+                ]["related_words"]["buckets"]:
+                    time_based_results.append(
+                        {
+                            "timestamp": timestamp,
+                            "word": related_bucket["key"],
+                            "count": related_bucket["doc_count"],
+                        }
+                    )
+
         return (
             posts,
             suggestions,
@@ -258,4 +334,5 @@ class BlogListView(FormView):
             no_order_related_search_word_logs,
             title_aggression_keywords,
             past_search_aggregated_logs,
+            time_based_results,
         )
