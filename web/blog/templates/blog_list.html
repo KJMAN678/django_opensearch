@@ -143,18 +143,16 @@
     </div>
 
     <div class="time-based-results">
-        <h3>同じ時間帯の検索ワード:</h3>
+        <h3>一緒に検索されたワード:</h3>
         <ul>
             {% if time_based_results %}
                 {% for result in time_based_results %}
                     <li class="time-based-result-item">
-                        <p>時間: {{ result.timestamp }}</p>
-                        <p>検索ワード: {{ result.word }}</p>
-                        <p>出現回数: {{ result.count }}</p>
+                        <p>{{ result.word }} ({{ result.count }})</p>
                     </li>
                 {% endfor %}
             {% else %}
-                <p>同じ時間帯の検索ワードはありません。</p>
+                <p>一緒に検索されたワードはありません。</p>
             {% endif %}
         </ul>
     </div>

@@ -34,8 +34,10 @@ def make_client():
 def search_log(search_word):
     """過去の検索ログを保存する"""
     client = make_client()
+    from search.documents import SearchLogDocument
+    import time
 
-    # インデックスを作成
+    # past_search_logインデックスを作成
     if not client.indices.exists(index="past_search_log"):
         PastSearchLogDocument.init(using=client, index="past_search_log")
 
@@ -52,6 +54,21 @@ def search_log(search_word):
             created_at=datetime.now(),
         )
         doc.save(using=client, index="past_search_log")
+
+    # search_logインデックスにも保存（時間ベース検索用）
+    if not client.indices.exists(index="search_log"):
+        SearchLogDocument.init(using=client, index="search_log")
+
+    # 現在時刻のUNIX時間
+    current_timestamp = int(time.time())
+    
+    search_log_doc = SearchLogDocument(
+        id=str(uuid.uuid4()),
+        user_id="1",  # Keywordフィールドなので文字列
+        search_query=search_word,
+        searched_at=current_timestamp,
+    )
+    search_log_doc.save(using=client, index="search_log")
 
 
 def split_search_and_related_keywords(sentence):
@@ -74,10 +91,6 @@ def agg_past_search_log(search_word):
 
     if not client.indices.exists(index="agg_past_search_log"):
         AggPastSearchLogDocument.init(using=client, index="agg_past_search_log")
-
-    print(search_word, flush=True)
-    print(search_word.split(" ")[:-1], flush=True)
-    print(search_word.split(" ")[-1], flush=True)
 
     doc = AggPastSearchLogDocument(
         id=uuid.uuid4(),

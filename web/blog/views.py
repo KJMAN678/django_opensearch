@@ -111,64 +111,6 @@ class BlogListView(FormView):
             },
         )
 
-        # 同じ時間帯の検索ワードを集計
-        time_based_search_response = client.search(
-            index="past_search_log",
-            body={
-                "aggs": {
-                    "search_times": {
-                        "filter": {"term": {"search_word": search_word}},
-                        "aggs": {
-                            "timestamps": {
-                                "terms": {"field": "created_at", "size": 1000},
-                                "aggs": {
-                                    "related_searches": {
-                                        "reverse_nested": {},
-                                        "aggs": {
-                                            "same_time_searches": {
-                                                "filter": {
-                                                    "bool": {
-                                                        "must": [
-                                                            {
-                                                                "term": {
-                                                                    "created_at": "{{timestamp}}"
-                                                                }
-                                                            },
-                                                            {
-                                                                "bool": {
-                                                                    "must_not": [
-                                                                        {
-                                                                            "term": {
-                                                                                "search_word": search_word
-                                                                            }
-                                                                        }
-                                                                    ]
-                                                                }
-                                                            },
-                                                        ]
-                                                    }
-                                                },
-                                                "aggs": {
-                                                    "related_words": {
-                                                        "terms": {
-                                                            "field": "search_word.keyword",
-                                                            "size": 5,
-                                                            "order": {"_count": "desc"},
-                                                        }
-                                                    }
-                                                },
-                                            }
-                                        },
-                                    }
-                                },
-                            }
-                        },
-                    }
-                }
-            },
-        )
-
-        # 既存のコード
         posts = []
         suggestions = []
 
@@ -184,6 +126,54 @@ class BlogListView(FormView):
             for option in response["suggest"]["title_suggest"][0]["options"]:
                 suggestion = {"title": option["text"]}
                 suggestions.append(suggestion)
+
+        # 1. 検索ワードが使われた時間帯を取得
+        searched_at_response = client.search(
+            index="search_log",
+            body={
+                "query": {"term": {"search_query": search_word}},
+                "size": 1000,
+                "_source": ["searched_at"],
+            },
+        )
+        searched_at_list = list(
+            {
+                hit["_source"]["searched_at"]
+                for hit in searched_at_response["hits"]["hits"]
+            }
+        )
+        # print(searched_at_list, flush=True)
+
+        # 2. その時間帯で一緒に検索された他のsearch_queryを全体で集計
+        agg_response = client.search(
+            index="search_log",
+            body={
+                "query": {
+                    "bool": {
+                        "must": [{"terms": {"searched_at": searched_at_list}}],
+                        "must_not": [{"term": {"search_query": search_word}}],
+                    }
+                },
+                "aggs": {
+                    "related_queries": {
+                        "terms": {
+                            "field": "search_query",
+                            "size": 10,
+                            "order": {"_count": "desc"},
+                        }
+                    }
+                },
+            },
+        )
+        print(agg_response, flush=True)
+
+        # 3. 結果をtime_based_resultsに格納
+        time_based_results = []
+        if "aggregations" in agg_response:
+            for bucket in agg_response["aggregations"]["related_queries"]["buckets"]:
+                time_based_results.append(
+                    {"word": bucket["key"], "count": bucket["doc_count"]}
+                )
 
         # 過去の検索ログを取得
         past_search_logs_response = client.search(
@@ -306,24 +296,6 @@ class BlogListView(FormView):
             "buckets"
         ]:
             past_search_aggregated_logs.append(hit["key"])
-
-        # 同じ時間帯の検索ワードの結果を処理
-        time_based_results = []
-        if "aggregations" in time_based_search_response:
-            for timestamp_bucket in time_based_search_response["aggregations"][
-                "search_times"
-            ]["timestamps"]["buckets"]:
-                timestamp = timestamp_bucket["key"]
-                for related_bucket in timestamp_bucket["related_searches"][
-                    "same_time_searches"
-                ]["related_words"]["buckets"]:
-                    time_based_results.append(
-                        {
-                            "timestamp": timestamp,
-                            "word": related_bucket["key"],
-                            "count": related_bucket["doc_count"],
-                        }
-                    )
 
         return (
             posts,
