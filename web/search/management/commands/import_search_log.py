@@ -29,18 +29,19 @@ class Command(BaseCommand):
 
                 for row in reader:
                     try:
-                        # タイムスタンプのパース
+                        # タイムスタンプのパースとUNIX時間への変換
                         searched_at = timezone.make_aware(
                             datetime.datetime.strptime(
                                 row["TIMESTAMP"], "%Y-%m-%d %H:%M:%S"
                             )
                         )
+                        unix_timestamp = int(searched_at.timestamp())
 
                         logs.append(
                             SearchLog(
                                 user_id=row["USER_ID"],
                                 search_query=row["SEARCH_QUERY"],
-                                searched_at=searched_at,
+                                searched_at=unix_timestamp,
                             )
                         )
                     except (ValueError, KeyError) as e:
