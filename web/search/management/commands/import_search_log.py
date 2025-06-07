@@ -3,6 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 from search.models import SearchLog
 import datetime
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -29,8 +30,10 @@ class Command(BaseCommand):
                 for row in reader:
                     try:
                         # タイムスタンプのパース
-                        searched_at = datetime.datetime.strptime(
-                            row["TIMESTAMP"], "%Y-%m-%d %H:%M:%S"
+                        searched_at = timezone.make_aware(
+                            datetime.datetime.strptime(
+                                row["TIMESTAMP"], "%Y-%m-%d %H:%M:%S"
+                            )
                         )
 
                         logs.append(
