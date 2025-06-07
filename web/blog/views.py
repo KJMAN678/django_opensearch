@@ -127,53 +127,77 @@ class BlogListView(FormView):
                 suggestion = {"title": option["text"]}
                 suggestions.append(suggestion)
 
-        # 1. 検索ワードが使われた時間帯を取得
-        searched_at_response = client.search(
-            index="search_log",
-            body={
-                "query": {"term": {"search_query": search_word}},
-                "size": 1000,
-                "_source": ["searched_at"],
-            },
-        )
-        searched_at_list = list(
-            {
-                hit["_source"]["searched_at"]
-                for hit in searched_at_response["hits"]["hits"]
-            }
-        )
-        # print(searched_at_list, flush=True)
+        # 1. 検索ワードを分割
+        search_words = search_word.split()
+        all_time_based_results = []
 
-        # 2. その時間帯で一緒に検索された他のsearch_queryを全体で集計
-        agg_response = client.search(
-            index="search_log",
-            body={
-                "query": {
-                    "bool": {
-                        "must": [{"terms": {"searched_at": searched_at_list}}],
-                        "must_not": [{"term": {"search_query": search_word}}],
-                    }
+        # 各単語の検索時間を取得
+        word_timestamps = {}
+        for word in search_words:
+            searched_at_response = client.search(
+                index="search_log",
+                body={
+                    "query": {"term": {"search_query": word}},
+                    "size": 1000,
+                    "_source": ["searched_at"],
                 },
-                "aggs": {
-                    "related_queries": {
-                        "terms": {
-                            "field": "search_query",
-                            "size": 10,
-                            "order": {"_count": "desc"},
+            )
+            word_timestamps[word] = list(
+                {
+                    hit["_source"]["searched_at"]
+                    for hit in searched_at_response["hits"]["hits"]
+                }
+            )
+
+        # 同じ時間帯に検索された単語の組み合わせを特定
+        common_timestamps = set(word_timestamps[search_words[0]])
+        for word in search_words[1:]:
+            common_timestamps &= set(word_timestamps[word])
+
+        # 同じ時間帯に検索された場合のみ、その時間帯で一緒に検索されたワードを集計
+        if common_timestamps:
+            # その時間帯で一緒に検索された他のsearch_queryを全体で集計
+            agg_response = client.search(
+                index="search_log",
+                body={
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"terms": {"searched_at": list(common_timestamps)}}
+                            ],
+                            "must_not": [{"terms": {"search_query": search_words}}],
                         }
-                    }
+                    },
+                    "aggs": {
+                        "related_queries": {
+                            "terms": {
+                                "field": "search_query",
+                                "size": 10,
+                                "order": {"_count": "desc"},
+                            }
+                        }
+                    },
                 },
-            },
-        )
-        print(agg_response, flush=True)
+            )
+            print(agg_response, flush=True)
 
-        # 3. 結果をtime_based_resultsに格納
-        time_based_results = []
-        if "aggregations" in agg_response:
-            for bucket in agg_response["aggregations"]["related_queries"]["buckets"]:
-                time_based_results.append(
-                    {"word": bucket["key"], "count": bucket["doc_count"]}
-                )
+            # 結果を格納
+            if "aggregations" in agg_response:
+                for bucket in agg_response["aggregations"]["related_queries"][
+                    "buckets"
+                ]:
+                    all_time_based_results.append(
+                        {
+                            "word": bucket["key"],
+                            "count": bucket["doc_count"],
+                            "timestamp": list(common_timestamps)[0],
+                        }
+                    )
+
+        # 出現回数順にソート
+        time_based_results = sorted(
+            all_time_based_results, key=lambda x: x["count"], reverse=True
+        )[:10]  # 上位10件のみ表示
 
         # 過去の検索ログを取得
         past_search_logs_response = client.search(
