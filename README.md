@@ -62,7 +62,7 @@ $ docker compose run --rm web uv run ruff format .
 $ docker compose run --rm web uv run django-admin startapp search
 
 # マイグレーション
-$ docker compose run --rm web uv run manage.py makemigrations blog
+$ docker compose run --rm web uv run manage.py makemigrations blog search
 $ docker compose run --rm web uv run manage.py migrate
 
 # ダミーデータの登録
