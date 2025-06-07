@@ -112,10 +112,8 @@ class SearchLogDocument(Document):
                         "filter": [
                             "sudachi_baseform",
                             "sudachi_part_of_speech",
-                            "cjk_width",
                             "lowercase",
                             "sudachi_readingform",
-                            "sudachi_normalizedform",
                         ],
                     }
                 }
