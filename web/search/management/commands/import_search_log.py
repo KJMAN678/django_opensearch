@@ -29,13 +29,12 @@ class Command(BaseCommand):
                     try:
                         # タイムスタンプのパースとUNIX時間への変換
                         searched_at = int(row["TIMESTAMP"])
-                        unix_timestamp = int(searched_at.timestamp())
 
                         logs.append(
                             SearchLog(
                                 user_id=row["USER_ID"],
                                 search_query=row["SEARCH_QUERY"],
-                                searched_at=unix_timestamp,
+                                searched_at=searched_at,
                             )
                         )
                     except (ValueError, KeyError) as e:
