@@ -2,8 +2,6 @@ import csv
 import os
 from django.core.management.base import BaseCommand
 from search.models import SearchLog
-import datetime
-from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -30,11 +28,7 @@ class Command(BaseCommand):
                 for row in reader:
                     try:
                         # タイムスタンプのパースとUNIX時間への変換
-                        searched_at = timezone.make_aware(
-                            datetime.datetime.strptime(
-                                row["TIMESTAMP"], "%Y-%m-%d %H:%M:%S"
-                            )
-                        )
+                        searched_at = int(row["TIMESTAMP"])
                         unix_timestamp = int(searched_at.timestamp())
 
                         logs.append(
