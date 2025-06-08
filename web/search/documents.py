@@ -97,7 +97,7 @@ class SearchLogDocument(Document):
     id = Text()
     user_id = Keyword()
     search_query = Keyword()
-    searched_at = Integer()  # UNIX時間（エポック秒）
+    searched_at = Date()
 
     class Meta:
         name = "search_log"
