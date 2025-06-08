@@ -9,6 +9,7 @@ from search.search_log import (
     no_order_related_search_word_log,
     agg_past_search_log,
 )
+from typing import List, Dict, Any, Tuple
 
 
 class BlogListView(FormView):
@@ -42,6 +43,7 @@ class BlogListView(FormView):
             no_order_related_search_word_logs,
             title_aggression_keywords,
             past_search_aggregated_logs,
+            time_based_results,
         ) = self.search(search_word)
 
         # フォームと検索結果をテンプレートに渡す
@@ -58,6 +60,7 @@ class BlogListView(FormView):
                 "no_order_related_search_word_logs": no_order_related_search_word_logs,
                 "title_aggression_keywords": title_aggression_keywords,
                 "past_search_aggregated_logs": past_search_aggregated_logs,
+                "time_based_results": time_based_results,
             },
         )
 
@@ -91,8 +94,34 @@ class BlogListView(FormView):
             return suggestions
         return None
 
-    def search(self, search_word):
+    def search(
+        self, search_word: str
+    ) -> Tuple[
+        List[Dict[str, Any]],  # posts
+        List[Dict[str, Any]],  # suggestions
+        List[Dict[str, Any]],  # past_search_logs
+        List[Dict[str, Any]],  # agg_past_search_logs
+        List[str],  # related_search_word_logs
+        List[str],  # no_order_related_search_word_logs
+        List[str],  # title_aggression_keywords
+        List[str],  # past_search_aggregated_logs
+        List[Dict[str, Any]],  # time_based_results
+    ]:
         client = make_client()
+
+        # 検索ワードが空または空白のみの場合のチェック
+        if not search_word or not search_word.strip():
+            return (
+                [],  # posts
+                [],  # suggestions
+                [],  # past_search_logs
+                [],  # agg_past_search_logs
+                [],  # related_search_word_logs
+                [],  # no_order_related_search_word_logs
+                [],  # title_aggression_keywords
+                [],  # past_search_aggregated_logs
+                [],  # time_based_results
+            )
 
         # データの検索
         response = client.search(
@@ -124,6 +153,114 @@ class BlogListView(FormView):
             for option in response["suggest"]["title_suggest"][0]["options"]:
                 suggestion = {"title": option["text"]}
                 suggestions.append(suggestion)
+
+        # 1. 検索ワードを分割
+        search_words = search_word.split()
+        all_time_based_results = []
+
+        # 各単語の検索時間とユーザーIDを取得
+        word_timestamps_and_users = {}
+        for word in search_words:
+            try:
+                searched_at_response = client.search(
+                    index="search_log",
+                    body={
+                        "query": {"term": {"search_query": word}},
+                        "size": 1000,
+                        "_source": ["searched_at", "user_id"],
+                    },
+                )
+                word_timestamps_and_users[word] = list(
+                    {
+                        (
+                            hit["_source"]["searched_at"],
+                            hit["_source"].get("user_id", "anonymous"),
+                        )
+                        for hit in searched_at_response["hits"]["hits"]
+                    }
+                )
+            except Exception as e:
+                print(f"検索ログの取得中にエラーが発生しました: {e}")
+                word_timestamps_and_users[word] = []
+
+        # 同じ時間帯かつ同じユーザーで検索された単語の組み合わせを特定
+        common_timestamps_and_users = set(word_timestamps_and_users[search_words[0]])
+        for word in search_words[1:]:
+            common_timestamps_and_users &= set(word_timestamps_and_users[word])
+
+        # 同じ時間帯かつ同じユーザーで検索された場合のみ、その時間帯で一緒に検索されたワードを集計
+        if common_timestamps_and_users:
+            try:
+                # その時間帯で一緒に検索された他のsearch_queryを全体で集計
+                agg_response = client.search(
+                    index="search_log",
+                    body={
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "bool": {
+                                            "should": [
+                                                {
+                                                    "bool": {
+                                                        "must": [
+                                                            {
+                                                                "term": {
+                                                                    "searched_at": timestamp
+                                                                }
+                                                            },
+                                                            {
+                                                                "term": {
+                                                                    "user_id": user_id
+                                                                }
+                                                            },
+                                                        ]
+                                                    }
+                                                }
+                                                for timestamp, user_id in common_timestamps_and_users
+                                            ]
+                                        }
+                                    }
+                                ],
+                                "must_not": [{"terms": {"search_query": search_words}}],
+                            }
+                        },
+                        "aggs": {
+                            "related_queries": {
+                                "terms": {
+                                    "field": "search_query",
+                                    "size": 10,
+                                    "order": {"_count": "desc"},
+                                }
+                            }
+                        },
+                    },
+                )
+            except Exception as e:
+                print(f"関連検索の集計中にエラーが発生しました: {e}")
+                agg_response = {"aggregations": {"related_queries": {"buckets": []}}}
+        else:
+            # 同じユーザーが同じ時間帯に検索していない場合は空の結果を返す
+            agg_response = {"aggregations": {"related_queries": {"buckets": []}}}
+            print("同じユーザーが同じ時間帯に検索した履歴が見つかりませんでした")
+
+        # 結果を格納
+        if "aggregations" in agg_response:
+            for bucket in agg_response["aggregations"]["related_queries"]["buckets"]:
+                all_time_based_results.append(
+                    {
+                        "word": bucket["key"],
+                        "count": bucket["doc_count"],
+                        "timestamp": list(common_timestamps_and_users)[0][0]
+                        if common_timestamps_and_users
+                        else None,
+                    }
+                )
+
+        # 出現回数順にソート
+        time_based_results = sorted(
+            all_time_based_results, key=lambda x: x["count"], reverse=True
+        )[:10]  # 上位10件のみ表示
 
         # 過去の検索ログを取得
         past_search_logs_response = client.search(
@@ -161,7 +298,7 @@ class BlogListView(FormView):
                 "size": 5,
             },
         )
-        print(agg_past_search_logs_response, flush=True)
+
         agg_past_search_logs = []
         for hit in agg_past_search_logs_response["aggregations"][
             "agg_past_search_logs"
@@ -170,8 +307,6 @@ class BlogListView(FormView):
 
         # 関連の検索ワードを取得
         related_search_word_logs = []
-        # 関連キーワードのインデックスがあってもドキュメントが空だと sort count でエラーが出るので、
-        # ドキュメントが空ではないかどうかを確認する
         if client.count(index="related_search_word_log")["count"] > 0:
             related_search_word_response = client.search(
                 index="related_search_word_log",
@@ -258,4 +393,5 @@ class BlogListView(FormView):
             no_order_related_search_word_logs,
             title_aggression_keywords,
             past_search_aggregated_logs,
+            time_based_results,
         )

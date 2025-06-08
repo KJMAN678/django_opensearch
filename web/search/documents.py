@@ -89,3 +89,33 @@ class NoOrderRelatedSearchWordLogDocument(Document):
 
     class Meta:
         name = "no_order_related_search_word_log"
+
+
+class SearchLogDocument(Document):
+    """検索ログを保存するためのドキュメント"""
+
+    id = Text()
+    user_id = Keyword()
+    search_query = Keyword()
+    searched_at = Date()
+
+    class Meta:
+        name = "search_log"
+        settings = {
+            "analysis": {
+                "analyzer": {
+                    "sudachi_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "sudachi_tokenizer",
+                        "mode": "search",
+                        "char_filter": ["icu_normalizer"],
+                        "filter": [
+                            "sudachi_baseform",
+                            "sudachi_part_of_speech",
+                            "lowercase",
+                            "sudachi_readingform",
+                        ],
+                    }
+                }
+            }
+        }
