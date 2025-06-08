@@ -131,68 +131,104 @@ class BlogListView(FormView):
         search_words = search_word.split()
         all_time_based_results = []
 
-        # 各単語の検索時間を取得
-        word_timestamps = {}
+        # 各単語の検索時間とユーザーIDを取得
+        word_timestamps_and_users = {}
         for word in search_words:
-            searched_at_response = client.search(
-                index="search_log",
-                body={
-                    "query": {"term": {"search_query": word}},
-                    "size": 1000,
-                    "_source": ["searched_at"],
-                },
-            )
-            word_timestamps[word] = list(
-                {
-                    hit["_source"]["searched_at"]
-                    for hit in searched_at_response["hits"]["hits"]
-                }
-            )
+            try:
+                searched_at_response = client.search(
+                    index="search_log",
+                    body={
+                        "query": {"term": {"search_query": word}},
+                        "size": 1000,
+                        "_source": ["searched_at", "user_id"],
+                    },
+                )
+                word_timestamps_and_users[word] = list(
+                    {
+                        (
+                            hit["_source"]["searched_at"],
+                            hit["_source"].get("user_id", "anonymous"),
+                        )
+                        for hit in searched_at_response["hits"]["hits"]
+                    }
+                )
+            except Exception as e:
+                print(f"検索ログの取得中にエラーが発生しました: {e}")
+                word_timestamps_and_users[word] = []
 
-        # 同じ時間帯に検索された単語の組み合わせを特定
-        common_timestamps = set(word_timestamps[search_words[0]])
+        # 同じ時間帯かつ同じユーザーで検索された単語の組み合わせを特定
+        common_timestamps_and_users = set(word_timestamps_and_users[search_words[0]])
         for word in search_words[1:]:
-            common_timestamps &= set(word_timestamps[word])
+            common_timestamps_and_users &= set(word_timestamps_and_users[word])
 
-        # 同じ時間帯に検索された場合のみ、その時間帯で一緒に検索されたワードを集計
-        if common_timestamps:
-            # その時間帯で一緒に検索された他のsearch_queryを全体で集計
-            agg_response = client.search(
-                index="search_log",
-                body={
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {"terms": {"searched_at": list(common_timestamps)}}
-                            ],
-                            "must_not": [{"terms": {"search_query": search_words}}],
-                        }
-                    },
-                    "aggs": {
-                        "related_queries": {
-                            "terms": {
-                                "field": "search_query",
-                                "size": 10,
-                                "order": {"_count": "desc"},
+        # 同じ時間帯かつ同じユーザーで検索された場合のみ、その時間帯で一緒に検索されたワードを集計
+        if common_timestamps_and_users:
+            try:
+                # その時間帯で一緒に検索された他のsearch_queryを全体で集計
+                agg_response = client.search(
+                    index="search_log",
+                    body={
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "bool": {
+                                            "should": [
+                                                {
+                                                    "bool": {
+                                                        "must": [
+                                                            {
+                                                                "term": {
+                                                                    "searched_at": timestamp
+                                                                }
+                                                            },
+                                                            {
+                                                                "term": {
+                                                                    "user_id": user_id
+                                                                }
+                                                            },
+                                                        ]
+                                                    }
+                                                }
+                                                for timestamp, user_id in common_timestamps_and_users
+                                            ]
+                                        }
+                                    }
+                                ],
+                                "must_not": [{"terms": {"search_query": search_words}}],
                             }
-                        }
+                        },
+                        "aggs": {
+                            "related_queries": {
+                                "terms": {
+                                    "field": "search_query",
+                                    "size": 10,
+                                    "order": {"_count": "desc"},
+                                }
+                            }
+                        },
                     },
-                },
-            )
-            print(agg_response, flush=True)
+                )
+            except Exception as e:
+                print(f"関連検索の集計中にエラーが発生しました: {e}")
+                agg_response = {"aggregations": {"related_queries": {"buckets": []}}}
+        else:
+            # 同じユーザーが同じ時間帯に検索していない場合は空の結果を返す
+            agg_response = {"aggregations": {"related_queries": {"buckets": []}}}
+            print("同じユーザーが同じ時間帯に検索した履歴が見つかりませんでした")
 
-            # 結果を格納
-            if "aggregations" in agg_response:
-                for bucket in agg_response["aggregations"]["related_queries"][
-                    "buckets"
-                ]:
-                    all_time_based_results.append(
-                        {
-                            "word": bucket["key"],
-                            "count": bucket["doc_count"],
-                            "timestamp": list(common_timestamps)[0],
-                        }
-                    )
+        # 結果を格納
+        if "aggregations" in agg_response:
+            for bucket in agg_response["aggregations"]["related_queries"]["buckets"]:
+                all_time_based_results.append(
+                    {
+                        "word": bucket["key"],
+                        "count": bucket["doc_count"],
+                        "timestamp": list(common_timestamps_and_users)[0][0]
+                        if common_timestamps_and_users
+                        else None,
+                    }
+                )
 
         # 出現回数順にソート
         time_based_results = sorted(
