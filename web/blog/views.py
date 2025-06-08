@@ -9,6 +9,7 @@ from search.search_log import (
     no_order_related_search_word_log,
     agg_past_search_log,
 )
+from typing import List, Dict, Any, Tuple
 
 
 class BlogListView(FormView):
@@ -93,8 +94,34 @@ class BlogListView(FormView):
             return suggestions
         return None
 
-    def search(self, search_word):
+    def search(
+        self, search_word: str
+    ) -> Tuple[
+        List[Dict[str, Any]],  # posts
+        List[Dict[str, Any]],  # suggestions
+        List[Dict[str, Any]],  # past_search_logs
+        List[Dict[str, Any]],  # agg_past_search_logs
+        List[str],  # related_search_word_logs
+        List[str],  # no_order_related_search_word_logs
+        List[str],  # title_aggression_keywords
+        List[str],  # past_search_aggregated_logs
+        List[Dict[str, Any]],  # time_based_results
+    ]:
         client = make_client()
+
+        # 検索ワードが空または空白のみの場合のチェック
+        if not search_word or not search_word.strip():
+            return (
+                [],  # posts
+                [],  # suggestions
+                [],  # past_search_logs
+                [],  # agg_past_search_logs
+                [],  # related_search_word_logs
+                [],  # no_order_related_search_word_logs
+                [],  # title_aggression_keywords
+                [],  # past_search_aggregated_logs
+                [],  # time_based_results
+            )
 
         # データの検索
         response = client.search(
