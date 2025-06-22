@@ -19,7 +19,7 @@ jobs:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           response_language: "ja-JP"
-          pr_description.extra_instructions: "回答は必ず全て日本語で記述してください。" 
-          pr_reviewer.extra_instructions: "回答は必ず全て日本語で記述してください。" 
-          pr_code_suggestions.extra_instructions: "回答は必ず全て日本語で記述してください。" 
-          pr_update_changelog.extra_instructions: "回答は必ず全て日本語で記述してください。" 
+          pr_description.extra_instructions: Japanese in descriptions. Titles should have prefix of commitlint pattern such as `feat:`, `chore:`, `test:`, `fix:`, `ci:`, `docs:` etc'
+          pr_reviewer.extra_instructions: 'Please use Japanese in descriptions.'
+          pr_code_suggestions.extra_instructions: 'Please use Japanese in descriptions.'
+          pr_update_changelog.extra_instructions: 'Please use Japanese in descriptions.'

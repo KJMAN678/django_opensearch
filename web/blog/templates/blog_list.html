@@ -141,5 +141,20 @@
             {% endif %}
         </ul>
     </div>
+
+    <div class="time-based-results">
+        <h3>一緒に検索されたワード:</h3>
+        <ul>
+            {% if time_based_results %}
+                {% for result in time_based_results %}
+                    <li class="time-based-result-item">
+                        <p>{{ result.word }} ({{ result.count }})</p>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <p>一緒に検索されたワードはありません。</p>
+            {% endif %}
+        </ul>
+    </div>
 </body>
 </html>
