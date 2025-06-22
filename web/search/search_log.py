@@ -61,7 +61,7 @@ def search_log(search_word):
 
     # 現在時刻のUNIX時間
     current_timestamp = int(time.time())
-    
+
     search_log_doc = SearchLogDocument(
         id=str(uuid.uuid4()),
         user_id="1",  # Keywordフィールドなので文字列
