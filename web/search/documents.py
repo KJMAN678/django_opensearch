@@ -2,7 +2,7 @@ from opensearchpy import Document, Text, Completion, Date, Keyword, Integer
 
 
 class BlogDocument(Document):
-    id = Text()
+    id = Keyword()  # Changed to Keyword for aggregations
     title = Text()
     title_suggest = Completion()
     content = Text()
@@ -10,6 +10,8 @@ class BlogDocument(Document):
         fielddata=True,
         analyzer="sudachi",
     )
+    created_at = Date()
+    updated_at = Date()
     # title_aggression = Keyword()
 
     class Meta:
@@ -119,3 +121,17 @@ class SearchLogDocument(Document):
                 }
             }
         }
+
+
+class BlogTransformDocument(Document):
+    """ブログデータの変換結果を保存するためのドキュメント"""
+
+    date_key = Keyword()
+    blog_count = Integer()
+    avg_content_length = Integer()
+    total_content_length = Integer()
+    avg_title_length = Integer()
+    total_title_length = Integer()
+
+    class Meta:
+        name = "blog_transform"

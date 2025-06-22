@@ -27,5 +27,7 @@ class Command(BaseCommand):
                 title_suggest={"input": blog.title},
                 title_aggression=blog.title,
                 content=blog.content,
+                created_at=blog.created_at,
+                updated_at=blog.updated_at,
             )
             doc.save(using=client, index="blog")
