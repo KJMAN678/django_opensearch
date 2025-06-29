@@ -149,3 +149,28 @@ class PermutationSearchWordLogDocument(Document):
     
     class Meta:
         name = "permutation_search_word_log"
+
+
+class CoOccurrenceSearchLogDocument(Document):
+    """同時検索ログを保存するためのドキュメント"""
+    
+    id = Text()
+    search_word = Keyword()
+    session_id = Keyword()
+    user_id = Keyword()
+    created_at = Date()
+    
+    class Meta:
+        name = "co_occurrence_search_log"
+
+
+class SearchSuggestionDocument(Document):
+    """検索サジェストを保存するためのドキュメント"""
+    
+    id = Text()
+    search_query = Keyword()
+    related_keyword_suggestion = Keyword()
+    co_occurrence_count = Integer()
+    
+    class Meta:
+        name = "search_suggestion"

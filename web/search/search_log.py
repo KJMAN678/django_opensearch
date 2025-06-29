@@ -6,6 +6,8 @@ from search.documents import (
     NoOrderRelatedSearchWordLogDocument,
     AggPastSearchLogDocument,
     PermutationSearchWordLogDocument,
+    CoOccurrenceSearchLogDocument,
+    SearchSuggestionDocument,
 )
 from datetime import datetime
 import uuid
@@ -186,6 +188,33 @@ def no_order_related_search_word_log(search_word):
                 },
             },
         )
+
+
+def co_occurrence_search_log(search_word, user_id="user_001"):
+    """同時検索ログを記録する"""
+    import uuid
+    from datetime import datetime
+    
+    client = make_client()
+    
+    # インデックスを作成
+    if not client.indices.exists(index="co_occurrence_search_log"):
+        CoOccurrenceSearchLogDocument.init(using=client, index="co_occurrence_search_log")
+    
+    session_id = str(uuid.uuid4())
+    
+    words = search_word.split()
+    for word in words:
+        doc = CoOccurrenceSearchLogDocument(
+            id=str(uuid.uuid4()),
+            search_word=word,
+            session_id=session_id,
+            user_id=user_id,
+            created_at=datetime.now(),
+        )
+        doc.save(using=client, index="co_occurrence_search_log")
+    
+    return session_id
 
 
 def generate_factorial_permutations(search_words):
