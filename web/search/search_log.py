@@ -5,6 +5,7 @@ from search.documents import (
     RelatedSearchWordLogDocument,
     NoOrderRelatedSearchWordLogDocument,
     AggPastSearchLogDocument,
+    PermutationSearchWordLogDocument,
 )
 from datetime import datetime
 import uuid
@@ -181,6 +182,59 @@ def no_order_related_search_word_log(search_word):
                 "upsert": {
                     "search_query": query,
                     "related_search_word": related_search_word,
+                    "count": 1,
+                },
+            },
+        )
+
+
+def generate_factorial_permutations(search_words):
+    """Generate all factorial permutations for search terms"""
+    import itertools
+    all_perms = []
+    
+    for r in range(1, len(search_words)):
+        for perm in itertools.permutations(search_words, r):
+            remaining = [w for w in search_words if w not in perm]
+            if remaining:
+                search_query = " ".join(perm)
+                related_word = " ".join(remaining)
+                all_perms.append((search_query, related_word))
+    
+    return all_perms
+
+
+def permutation_search_word_log(search_word):
+    """順列を考慮した関連検索ワードを保存"""
+    client = make_client()
+    
+    # インデックスを作成
+    if not client.indices.exists(index="permutation_search_word_log"):
+        PermutationSearchWordLogDocument.init(using=client, index="permutation_search_word_log")
+    
+    words = search_word.split()
+    if len(words) <= 1:
+        return
+    
+    permutations = generate_factorial_permutations(words)
+    
+    for i, (query, related) in enumerate(permutations):
+        doc_id = f"{search_word}_{query}_{related}".replace(" ", "_")
+        
+        # ドキュメントがなければ count を 1で作成、すでにあれば count を 1 増やす
+        client.update(
+            id=doc_id,
+            index="permutation_search_word_log",
+            body={
+                "script": {
+                    "source": "ctx._source.count += 1",
+                    "lang": "painless",
+                },
+                "upsert": {
+                    "original_search_query": search_word,
+                    "search_query": query,
+                    "related_search_word": related,
+                    "permutation_order": i + 1,
                     "count": 1,
                 },
             },

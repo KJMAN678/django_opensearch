@@ -135,3 +135,17 @@ class BlogTransformDocument(Document):
 
     class Meta:
         name = "blog_transform"
+
+
+class PermutationSearchWordLogDocument(Document):
+    """順列を考慮した関連検索ワードを保存・表示するためのドキュメント"""
+    
+    id = Text()
+    original_search_query = Keyword()
+    search_query = Keyword()
+    related_search_word = Keyword()
+    permutation_order = Integer()
+    count = Integer()
+    
+    class Meta:
+        name = "permutation_search_word_log"
