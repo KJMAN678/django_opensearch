@@ -154,7 +154,7 @@ class Command(BaseCommand):
                                             
                                             if (query_words.size() > 0 && remaining_words.size() > 0) {
                                                 def search_query = String.join(' ', query_words);
-                                                def suggestion = search_query + ' ' + String.join(' ', remaining_words);
+                                                def suggestion = String.join(' ', remaining_words);
                                                 combinations.add(['search_query': search_query, 'suggestion': suggestion]);
                                             }
                                         }
