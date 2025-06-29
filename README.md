@@ -57,6 +57,54 @@ $ docker compose run --rm web uv run ruff check . --fix
 $ docker compose run --rm web uv run ruff format .
 ```
 
+## OpenSearch Index-Transforms 機能
+
+```sh
+# Index-Transforms ジョブの作成と実行
+$ docker compose run --rm web uv run manage.py create_index_transform --delete-existing --execute
+
+# Transform ジョブの管理（作成、開始、停止、削除、状態確認）
+$ docker compose run --rm web uv run manage.py manage_transform_jobs --action create --job-name blog_monthly_transform
+$ docker compose run --rm web uv run manage.py manage_transform_jobs --action start --job-name blog_monthly_transform
+$ docker compose run --rm web uv run manage.py manage_transform_jobs --action stop --job-name blog_monthly_transform
+$ docker compose run --rm web uv run manage.py manage_transform_jobs --action delete --job-name blog_monthly_transform
+$ docker compose run --rm web uv run manage.py manage_transform_jobs --action status --job-name blog_monthly_transform
+
+# 変換されたインデックスの検索
+$ docker compose run --rm web uv run manage.py search_transformed_index --index blog_monthly_stats
+```
+
+## 検索サジェスト機能（Scripted-Metric Aggregations）
+
+```sh
+# テストデータ作成 + 検索サジェスト生成（scripted-metric aggregations使用）
+$ docker compose run --rm web uv run manage.py create_scripted_metric_suggestions --test-data
+
+# 同時検索ログのテスト（個別検索語をセッションIDでグループ化）
+$ docker compose run --rm web uv run manage.py test_co_occurrence_search --query "おにぎり 梅 美味しい" --user-id user_001
+
+# 単語1つでもテスト可能
+$ docker compose run --rm web uv run manage.py test_co_occurrence_search --query "おにぎり"
+```
+
+### 検索サジェスト機能の仕組み
+
+1. **同時検索ログの記録**: 「おにぎり 梅 美味しい」を入力すると、各単語を個別にログ記録
+   ```
+   検索ワード: おにぎり, セッションID: abc123, ユーザーID: user_001
+   検索ワード: 梅,     セッションID: abc123, ユーザーID: user_001  
+   検索ワード: 美味しい, セッションID: abc123, ユーザーID: user_001
+   ```
+
+2. **Scripted-Metric Aggregations**: 同じセッションIDの検索語から順列を生成し、検索サジェストを作成
+   ```
+   検索クエリ: おにぎり → 関連サジェスト: おにぎり 梅 美味しい
+   検索クエリ: 梅 → 関連サジェスト: 梅 おにぎり 美味しい
+   検索クエリ: おにぎり 梅 → 関連サジェスト: おにぎり 梅 美味しい
+   ```
+
+3. **汎用的な順列生成**: 単語数に関係なく動作（1語〜5語以上まで対応）
+
 ```sh
 # app 追加
 $ docker compose run --rm web uv run django-admin startapp search
