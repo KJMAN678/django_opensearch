@@ -76,14 +76,27 @@ class Command(BaseCommand):
                                         }
                                     }
                                     
-                                    if (words.size() < 2) {
+                                    if (words.size() == 0) {
                                         return combinations;
                                     }
                                     
-                                    // Generate all permutations of the words
+                                    // Handle single word case
+                                    if (words.size() == 1) {
+                                        def single_word = words.get(0);
+                                        combinations.add(['search_query': single_word, 'suggestion': single_word]);
+                                        return combinations;
+                                    }
+                                    
+                                    // Generate all permutations for multiple words
                                     def permutations = [];
-                                    if (words.size() == 3) {
-                                        // Generate all 6 permutations for 3 words
+                                    
+                                    // Generate permutations based on word count
+                                    if (words.size() == 2) {
+                                        def w0 = words.get(0);
+                                        def w1 = words.get(1);
+                                        permutations.add([w0, w1]);
+                                        permutations.add([w1, w0]);
+                                    } else if (words.size() == 3) {
                                         def w0 = words.get(0);
                                         def w1 = words.get(1);
                                         def w2 = words.get(2);
@@ -94,7 +107,39 @@ class Command(BaseCommand):
                                         permutations.add([w1, w2, w0]);
                                         permutations.add([w2, w0, w1]);
                                         permutations.add([w2, w1, w0]);
+                                    } else if (words.size() == 4) {
+                                        // Generate all 24 permutations for 4 words
+                                        def w0 = words.get(0);
+                                        def w1 = words.get(1);
+                                        def w2 = words.get(2);
+                                        def w3 = words.get(3);
+                                        
+                                        permutations.add([w0, w1, w2, w3]);
+                                        permutations.add([w0, w1, w3, w2]);
+                                        permutations.add([w0, w2, w1, w3]);
+                                        permutations.add([w0, w2, w3, w1]);
+                                        permutations.add([w0, w3, w1, w2]);
+                                        permutations.add([w0, w3, w2, w1]);
+                                        permutations.add([w1, w0, w2, w3]);
+                                        permutations.add([w1, w0, w3, w2]);
+                                        permutations.add([w1, w2, w0, w3]);
+                                        permutations.add([w1, w2, w3, w0]);
+                                        permutations.add([w1, w3, w0, w2]);
+                                        permutations.add([w1, w3, w2, w0]);
+                                        permutations.add([w2, w0, w1, w3]);
+                                        permutations.add([w2, w0, w3, w1]);
+                                        permutations.add([w2, w1, w0, w3]);
+                                        permutations.add([w2, w1, w3, w0]);
+                                        permutations.add([w2, w3, w0, w1]);
+                                        permutations.add([w2, w3, w1, w0]);
+                                        permutations.add([w3, w0, w1, w2]);
+                                        permutations.add([w3, w0, w2, w1]);
+                                        permutations.add([w3, w1, w0, w2]);
+                                        permutations.add([w3, w1, w2, w0]);
+                                        permutations.add([w3, w2, w0, w1]);
+                                        permutations.add([w3, w2, w1, w0]);
                                     } else {
+                                        // For 5+ words, use original order only to avoid too many combinations
                                         permutations.add(words);
                                     }
                                     
