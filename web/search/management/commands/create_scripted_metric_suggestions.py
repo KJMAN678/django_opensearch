@@ -87,52 +87,62 @@ class Command(BaseCommand):
                                         return combinations;
                                     }
                                     
-                                    // Generate permutations using simple nested loops (no word-count branching)
+                                    // Generate all permutations using Heap's iterative algorithm
                                     def permutations = [];
-                                    def n = words.size();
                                     
-                                    // For single word, just add it as is
-                                    if (n == 1) {
-                                        permutations.add(words);
-                                    } else if (n <= 4) {
-                                        // Use simple approach: generate all permutations with nested loops
-                                        // This avoids complex algorithms that Painless doesn't handle well
+                                    // Heap's iterative algorithm - no recursion needed
+                                    def generatePermutationsIterative(arr) {
+                                        def result = [];
+                                        def n = arr.size();
+                                        def c = [];
                                         
-                                        // Add original order first
-                                        def original = [];
-                                        for (word in words) {
-                                            original.add(word);
-                                        }
-                                        permutations.add(original);
-                                        
-                                        // Generate other permutations by swapping elements
+                                        // Initialize state array
                                         for (int i = 0; i < n; i++) {
-                                            for (int j = i + 1; j < n; j++) {
+                                            c.add(0);
+                                        }
+                                        
+                                        // Add initial arrangement
+                                        def initial = [];
+                                        for (item in arr) {
+                                            initial.add(item);
+                                        }
+                                        result.add(initial);
+                                        
+                                        int i = 1;
+                                        while (i < n) {
+                                            if (c.get(i) < i) {
+                                                def k = i % 2 == 0 ? 0 : c.get(i);
+                                                
+                                                // Swap elements
+                                                def temp = arr.get(i);
+                                                arr.set(i, arr.get(k));
+                                                arr.set(k, temp);
+                                                
+                                                // Add new permutation
                                                 def perm = [];
-                                                for (int k = 0; k < n; k++) {
-                                                    if (k == i) {
-                                                        perm.add(words.get(j));
-                                                    } else if (k == j) {
-                                                        perm.add(words.get(i));
-                                                    } else {
-                                                        perm.add(words.get(k));
-                                                    }
+                                                for (item in arr) {
+                                                    perm.add(item);
                                                 }
-                                                permutations.add(perm);
+                                                result.add(perm);
+                                                
+                                                c.set(i, c.get(i) + 1);
+                                                i = 1;
+                                            } else {
+                                                c.set(i, 0);
+                                                i++;
                                             }
                                         }
                                         
-                                        // For 3+ words, add some rotations to get more permutations
-                                        if (n >= 3) {
-                                            // Rotate elements to create more permutations
-                                            for (int shift = 1; shift < n; shift++) {
-                                                def rotated = [];
-                                                for (int i = 0; i < n; i++) {
-                                                    rotated.add(words.get((i + shift) % n));
-                                                }
-                                                permutations.add(rotated);
-                                            }
+                                        return result;
+                                    }
+                                    
+                                    // Limit permutations for performance (max 4! = 24 permutations)
+                                    if (words.size() <= 4) {
+                                        def wordsCopy = [];
+                                        for (word in words) {
+                                            wordsCopy.add(word);
                                         }
+                                        permutations = generatePermutationsIterative(wordsCopy);
                                     } else {
                                         // For 5+ words, use original order only to avoid too many combinations
                                         permutations.add(words);
