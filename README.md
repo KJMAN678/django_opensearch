@@ -29,6 +29,9 @@ $ select * from related_search_word_log;
 $ select * from no_order_related_search_word_log;
 $ select * from agg_past_search_log;
 
+# transform index by create_scripted_metric_suggestions で作成したインデックスを確認.
+$ select * from search_suggestion;
+
 # Django 検索画面
 http://localhost:8000/blog/
 
@@ -77,11 +80,12 @@ $ docker compose run --rm web uv run manage.py search_transformed_index --index 
 ## 検索サジェスト機能（Scripted-Metric Aggregations）
 
 ```sh
-# テストデータ作成 + 検索サジェスト生成（scripted-metric aggregations使用）
-$ docker compose run --rm web uv run manage.py create_scripted_metric_suggestions --test-data
-
 # 同時検索ログのテスト（個別検索語をセッションIDでグループ化）
-$ docker compose run --rm web uv run manage.py test_co_occurrence_search --query "おにぎり 梅 美味しい" --user-id user_001
+$ docker compose run --rm web uv run manage.py test_co_occurrence_search --query "おにぎり 梅 美味しい 新鮮" --user user_001
+
+# テストデータ作成 + 検索サジェスト生成（scripted-metric aggregations使用）
+# search_suggestion インデックスが更新される
+$ docker compose run --rm web uv run manage.py create_scripted_metric_suggestions --test-data
 
 # 単語1つでもテスト可能
 $ docker compose run --rm web uv run manage.py test_co_occurrence_search --query "おにぎり"
