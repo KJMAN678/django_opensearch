@@ -111,20 +111,16 @@ class Command(BaseCommand):
                                         }
                                     }
                                     
-                                    // Also create single word queries with all other words as suggestions
+                                    // Create single word queries with search_query + each co-occurring word
                                     for (int i = 0; i < words.size(); i++) {
                                         def single_word = words.get(i);
-                                        def other_words = [];
                                         
                                         for (int j = 0; j < words.size(); j++) {
                                             if (j != i) {
-                                                other_words.add(words.get(j));
+                                                def co_occurring_word = words.get(j);
+                                                def suggestion = single_word + ' ' + co_occurring_word;
+                                                combinations.add(['search_query': single_word, 'suggestion': suggestion]);
                                             }
-                                        }
-                                        
-                                        if (other_words.size() > 0) {
-                                            def suggestion = String.join(' ', other_words);
-                                            combinations.add(['search_query': single_word, 'suggestion': suggestion]);
                                         }
                                     }
                                     
