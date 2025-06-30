@@ -87,75 +87,39 @@ class Command(BaseCommand):
                                         return combinations;
                                     }
                                     
-                                    // Generate permutations using simple nested loops (no word-count branching)
-                                    def permutations = [];
-                                    def n = words.size();
+                                    // Simple approach: generate combinations directly without complex permutations
+                                    // This avoids Painless scripting limitations with complex algorithms
                                     
-                                    // For single word, just add it as is
-                                    if (n == 1) {
-                                        permutations.add(words);
-                                    } else if (n <= 4) {
-                                        // Use simple approach: generate all permutations with nested loops
-                                        // This avoids complex algorithms that Painless doesn't handle well
-                                        
-                                        // Add original order first
-                                        def original = [];
-                                        for (word in words) {
-                                            original.add(word);
-                                        }
-                                        permutations.add(original);
-                                        
-                                        // Generate other permutations by swapping elements
-                                        for (int i = 0; i < n; i++) {
-                                            for (int j = i + 1; j < n; j++) {
-                                                def perm = [];
-                                                for (int k = 0; k < n; k++) {
-                                                    if (k == i) {
-                                                        perm.add(words.get(j));
-                                                    } else if (k == j) {
-                                                        perm.add(words.get(i));
-                                                    } else {
-                                                        perm.add(words.get(k));
-                                                    }
-                                                }
-                                                permutations.add(perm);
-                                            }
+                                    // For each word position, create search_query + remaining words combinations
+                                    for (int i = 1; i < words.size(); i++) {
+                                        // Take first i words as search query
+                                        def query_words = [];
+                                        for (int j = 0; j < i; j++) {
+                                            query_words.add(words.get(j));
                                         }
                                         
-                                        // For 3+ words, add some rotations to get more permutations
-                                        if (n >= 3) {
-                                            // Rotate elements to create more permutations
-                                            for (int shift = 1; shift < n; shift++) {
-                                                def rotated = [];
-                                                for (int i = 0; i < n; i++) {
-                                                    rotated.add(words.get((i + shift) % n));
-                                                }
-                                                permutations.add(rotated);
-                                            }
+                                        // Take remaining words as suggestion
+                                        def remaining_words = [];
+                                        for (int j = i; j < words.size(); j++) {
+                                            remaining_words.add(words.get(j));
                                         }
-                                    } else {
-                                        // For 5+ words, use original order only to avoid too many combinations
-                                        permutations.add(words);
+                                        
+                                        if (query_words.size() > 0 && remaining_words.size() > 0) {
+                                            def search_query = String.join(' ', query_words);
+                                            def suggestion = String.join(' ', remaining_words);
+                                            combinations.add(['search_query': search_query, 'suggestion': suggestion]);
+                                        }
                                     }
                                     
-                                    // For each permutation, create combinations
-                                    for (perm in permutations) {
-                                        for (int i = 1; i < perm.size(); i++) {
-                                            def query_words = [];
-                                            def remaining_words = [];
-                                            
-                                            for (int k = 0; k < i; k++) {
-                                                query_words.add(perm.get(k));
-                                            }
-                                            
-                                            for (int k = i; k < perm.size(); k++) {
-                                                remaining_words.add(perm.get(k));
-                                            }
-                                            
-                                            if (query_words.size() > 0 && remaining_words.size() > 0) {
-                                                def search_query = String.join(' ', query_words);
-                                                def suggestion = String.join(' ', remaining_words);
-                                                combinations.add(['search_query': search_query, 'suggestion': suggestion]);
+                                    // Create single word queries with search_query + each co-occurring word
+                                    for (int i = 0; i < words.size(); i++) {
+                                        def single_word = words.get(i);
+                                        
+                                        for (int j = 0; j < words.size(); j++) {
+                                            if (j != i) {
+                                                def co_occurring_word = words.get(j);
+                                                def suggestion = single_word + ' ' + co_occurring_word;
+                                                combinations.add(['search_query': single_word, 'suggestion': suggestion]);
                                             }
                                         }
                                     }
