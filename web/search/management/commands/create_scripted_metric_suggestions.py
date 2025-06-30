@@ -87,31 +87,10 @@ class Command(BaseCommand):
                                         return combinations;
                                     }
                                     
-                                    // Simple approach: generate combinations directly without complex permutations
-                                    // This avoids Painless scripting limitations with complex algorithms
+                                    // Generate search_query + co-occurring word combinations
+                                    // For each word, create search_query with each other word as suggestion
                                     
-                                    // For each word position, create search_query + remaining words combinations
-                                    for (int i = 1; i < words.size(); i++) {
-                                        // Take first i words as search query
-                                        def query_words = [];
-                                        for (int j = 0; j < i; j++) {
-                                            query_words.add(words.get(j));
-                                        }
-                                        
-                                        // Take remaining words as suggestion
-                                        def remaining_words = [];
-                                        for (int j = i; j < words.size(); j++) {
-                                            remaining_words.add(words.get(j));
-                                        }
-                                        
-                                        if (query_words.size() > 0 && remaining_words.size() > 0) {
-                                            def search_query = String.join(' ', query_words);
-                                            def suggestion = String.join(' ', remaining_words);
-                                            combinations.add(['search_query': search_query, 'suggestion': suggestion]);
-                                        }
-                                    }
-                                    
-                                    // Create single word queries with search_query + each co-occurring word
+                                    // Single word search queries with each co-occurring word
                                     for (int i = 0; i < words.size(); i++) {
                                         def single_word = words.get(i);
                                         
@@ -120,6 +99,49 @@ class Command(BaseCommand):
                                                 def co_occurring_word = words.get(j);
                                                 def suggestion = single_word + ' ' + co_occurring_word;
                                                 combinations.add(['search_query': single_word, 'suggestion': suggestion]);
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Two-word search queries with each remaining word as suggestion
+                                    if (words.size() >= 3) {
+                                        for (int i = 0; i < words.size() - 1; i++) {
+                                            for (int j = i + 1; j < words.size(); j++) {
+                                                def word1 = words.get(i);
+                                                def word2 = words.get(j);
+                                                def two_word_query = word1 + ' ' + word2;
+                                                
+                                                // Add each remaining word as suggestion
+                                                for (int k = 0; k < words.size(); k++) {
+                                                    if (k != i && k != j) {
+                                                        def remaining_word = words.get(k);
+                                                        def suggestion = two_word_query + ' ' + remaining_word;
+                                                        combinations.add(['search_query': two_word_query, 'suggestion': suggestion]);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Three-word search queries with remaining word as suggestion (for 4+ word sessions)
+                                    if (words.size() >= 4) {
+                                        for (int i = 0; i < words.size() - 2; i++) {
+                                            for (int j = i + 1; j < words.size() - 1; j++) {
+                                                for (int k = j + 1; k < words.size(); k++) {
+                                                    def word1 = words.get(i);
+                                                    def word2 = words.get(j);
+                                                    def word3 = words.get(k);
+                                                    def three_word_query = word1 + ' ' + word2 + ' ' + word3;
+                                                    
+                                                    // Add each remaining word as suggestion
+                                                    for (int m = 0; m < words.size(); m++) {
+                                                        if (m != i && m != j && m != k) {
+                                                            def remaining_word = words.get(m);
+                                                            def suggestion = three_word_query + ' ' + remaining_word;
+                                                            combinations.add(['search_query': three_word_query, 'suggestion': suggestion]);
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
