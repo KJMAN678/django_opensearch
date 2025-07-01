@@ -2,7 +2,7 @@ from opensearchpy import Document, Text, Completion, Date, Keyword, Integer
 
 
 class BlogDocument(Document):
-    id = Text()
+    id = Keyword()  # Changed to Keyword for aggregations
     title = Text()
     title_suggest = Completion()
     content = Text()
@@ -10,6 +10,8 @@ class BlogDocument(Document):
         fielddata=True,
         analyzer="sudachi",
     )
+    created_at = Date()
+    updated_at = Date()
     # title_aggression = Keyword()
 
     class Meta:
@@ -119,3 +121,56 @@ class SearchLogDocument(Document):
                 }
             }
         }
+
+
+class BlogTransformDocument(Document):
+    """ブログデータの変換結果を保存するためのドキュメント"""
+
+    date_key = Keyword()
+    blog_count = Integer()
+    avg_content_length = Integer()
+    total_content_length = Integer()
+    avg_title_length = Integer()
+    total_title_length = Integer()
+
+    class Meta:
+        name = "blog_transform"
+
+
+class PermutationSearchWordLogDocument(Document):
+    """順列を考慮した関連検索ワードを保存・表示するためのドキュメント"""
+    
+    id = Text()
+    original_search_query = Keyword()
+    search_query = Keyword()
+    related_search_word = Keyword()
+    permutation_order = Integer()
+    count = Integer()
+    
+    class Meta:
+        name = "permutation_search_word_log"
+
+
+class CoOccurrenceSearchLogDocument(Document):
+    """同時検索ログを保存するためのドキュメント"""
+    
+    id = Text()
+    search_word = Keyword()
+    session_id = Keyword()
+    user_id = Keyword()
+    created_at = Date()
+    
+    class Meta:
+        name = "co_occurrence_search_log"
+
+
+class SearchSuggestionDocument(Document):
+    """検索サジェストを保存するためのドキュメント"""
+    
+    id = Text()
+    search_query = Keyword()
+    related_keyword_suggestion = Keyword()
+    co_occurrence_count = Integer()
+    
+    class Meta:
+        name = "search_suggestion"
